@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Computing I, AST 232, ISRT | K.M. Tanvir</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #dbeafe;
+  --accent: #4f46e5;
+  --success: #059669;
+  --success-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --warning-dark: #b45309;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --neutral: #64748b;
+  --neutral-light: #f1f5f9;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 1180px; margin: 0 auto; padding: 28px 22px 80px; }
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%);
+  color: white;
+  padding: 44px 36px;
+  border-radius: var(--radius);
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  border-radius: 50%;
+}
+.hero-inner { position: relative; z-index: 1; }
+.kicker {
+  display: inline-block;
+  background: rgba(255,255,255,0.18);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  backdrop-filter: blur(4px);
+}
+.hero h1 {
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+  line-height: 1.15;
+}
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+}
+.hero-meta div { font-size: 0.9rem; opacity: 0.95; }
+.hero-meta strong { display: block; font-weight: 700; margin-bottom: 2px; letter-spacing: 0.3px; }
+
+/* ===== STATUS BAR ===== */
+.status-card {
+  background: var(--card);
+  padding: 18px 24px;
+  border-radius: var(--radius);
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.status-info { display: flex; align-items: center; gap: 12px; }
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+}
+.status-text { font-size: 0.95rem; color: var(--text); }
+.status-text strong { color: var(--success); font-weight: 700; }
+.counters { display: flex; gap: 22px; font-size: 0.88rem; }
+.counter { display: flex; align-items: baseline; gap: 6px; }
+.counter-num { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.counter-label { color: var(--muted); font-weight: 500; }
+.progress-wrap { flex: 1; min-width: 180px; max-width: 320px; }
+.progress-bar {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), #10b981);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.6s ease;
+}
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 8px 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::before {
+  content: "";
+  width: 4px;
+  height: 20px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* ===== LECTURE GRID ===== */
+.lecture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.lecture-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  min-height: 240px;
+}
+.lecture-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--primary);
+  opacity: 0.8;
+}
+.lecture-card.exercise::before { background: var(--warning); }
+.lecture-card.intro::before { background: var(--neutral); }
+
+.lecture-card.available { cursor: pointer; }
+.lecture-card.available:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+.lecture-card.exercise.available:hover {
+  border-color: var(--warning);
+}
+.lecture-card.locked {
+  opacity: 0.75;
+  cursor: not-allowed;
+  background: linear-gradient(to bottom, #fafbfc, #f1f5f9);
+}
+.lecture-card.intro {
+  cursor: default;
+  background: linear-gradient(to bottom, #fafbfc, #f1f5f9);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.lecture-num {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lecture-card.exercise .lecture-num {
+  color: var(--warning-dark);
+  background: var(--warning-light);
+}
+.lecture-card.intro .lecture-num {
+  color: var(--neutral);
+  background: var(--neutral-light);
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.badge-available {
+  color: var(--success);
+  background: var(--success-light);
+}
+.badge-locked {
+  color: var(--muted);
+  background: var(--neutral-light);
+}
+.badge-checking {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+.badge-completed {
+  color: var(--muted);
+  background: var(--neutral-light);
+}
+.badge-available::before {
+  content: "";
+  width: 6px; height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+}
+.badge-locked::before {
+  content: "🔒";
+  font-size: 0.8em;
+}
+.badge-completed::before {
+  content: "✓";
+  font-weight: 900;
+}
+.badge-checking::before {
+  content: "";
+  width: 8px; height: 8px;
+  border: 2px solid var(--primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.lecture-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.lecture-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.55;
+  flex: 1;
+  margin-bottom: 14px;
+}
+.lecture-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.tag {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--neutral-light);
+  padding: 3px 9px;
+  border-radius: 5px;
+}
+.lecture-card.exercise .tag {
+  color: var(--warning-dark);
+  background: var(--warning-light);
+}
+
+.card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.duration {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.action {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: gap var(--transition);
+}
+.lecture-card.exercise .action { color: var(--warning-dark); }
+.lecture-card.available:hover .action { gap: 8px; }
+.lecture-card.locked .action { color: var(--muted); }
+.lecture-card.intro .action { color: var(--muted); }
+
+/* ===== FOOTER ===== */
+.footer {
+  margin-top: 50px;
+  padding: 24px;
+  text-align: center;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.footer strong { color: var(--text); }
+.footer-links { margin-top: 10px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.footer-links a { color: var(--primary); text-decoration: none; font-weight: 500; }
+.footer-links a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .app { padding: 18px 14px 60px; }
+  .hero { padding: 32px 22px; }
+  .status-card { flex-direction: column; align-items: stretch; }
+  .counters { justify-content: space-around; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="kicker">AST 232 · Batch 31</span>
+      <h1>Statistical Computing I</h1>
+      <div class="hero-meta">
+        <div><strong>Instructor</strong>K.M. Tanvir</div>
+        <div><strong>Institution</strong>ISRT, University of Dhaka</div>
+        <div><strong>Language</strong>R</div>
+        <div><strong>Format</strong>Lab class, 15 meetings</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== STATUS CARD ===== -->
+  <div class="status-card">
+    <div class="status-info">
+      <span class="status-dot"></span>
+      <span class="status-text">Course is <strong>live</strong>, modules unlock as we progress</span>
+    </div>
+    <div class="counters">
+      <div class="counter">
+        <span class="counter-num" id="count-available">0</span>
+        <span class="counter-label">Available</span>
+      </div>
+      <div class="counter">
+        <span class="counter-num" id="count-upcoming">9</span>
+        <span class="counter-label">Upcoming</span>
+      </div>
+      <div class="counter">
+        <span class="counter-num" id="count-total">9</span>
+        <span class="counter-label">Total</span>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-label" id="progress-label">0 of 9 modules released</div>
+    </div>
+  </div>
+
+  <!-- ===== BLOCK 1: DEMOGRAPHY ===== -->
+  <h2 class="section-title">Block 1 · Demography in R</h2>
+  <div class="lecture-grid">
+
+    <!-- Module 1: Basic Measures -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 1 - Basic Measures of Demography/index.html"
+         data-num="M1">
+      <div class="card-head">
+        <span class="lecture-num">Module 1</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Basic Measures of Demography</h3>
+      <p class="lecture-desc">Sex ratio, masculinity proportion, aged child ratio, child and old age dependency ratios, and constructing a population pyramid in R using realistic district level data.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Module 2: Fertility -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 2 - Fertility Measures/index.html"
+         data-num="M2">
+      <div class="card-head">
+        <span class="lecture-num">Module 2</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Fertility Measures</h3>
+      <p class="lecture-desc">Crude Birth Rate, Monthly Birth Rate, General Fertility Rate, Age Specific Fertility Rate, Total Fertility Rate, Gross and Net Reproduction Rates, computed step by step in R on real Bangladesh data.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Module 3: Mortality -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 3 - Mortality Measures/index.html"
+         data-num="M3">
+      <div class="card-head">
+        <span class="lecture-num">Module 3</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Mortality Measures</h3>
+      <p class="lecture-desc">Crude Death Rate, Age Specific Death Rate, completeness of registration adjustment, and direct standardisation in R for fair comparisons across populations.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Module 4: Life Table -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 4 - Life Table Construction/index.html"
+         data-num="M4">
+      <div class="card-head">
+        <span class="lecture-num">Module 4</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Life Table Construction</h3>
+      <p class="lecture-desc">Complete and abridged life tables, the canonical columns from $l_x$ through $e_x$, and the Fergany method with a radix of 100,000, all built in R from age specific mortality rates.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Exercise A: Demography -->
+    <div class="lecture-card exercise"
+         data-type="exercise"
+         data-url="Exercise Class A - Demography Block/index.html"
+         data-num="EA">
+      <div class="card-head">
+        <span class="lecture-num">Exercise A</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Exercise Class A, Demography Block</h3>
+      <p class="lecture-desc">A graded practice round that mixes fertility, mortality, life tables, and dependency ratios on realistic Bangladesh and South Asia data, all solved in R.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Start exercises →</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== BLOCK 2: DESIGN OF EXPERIMENT ===== -->
+  <h2 class="section-title" style="margin-top: 36px;">Block 2 · Design of Experiment in R</h2>
+  <div class="lecture-grid">
+
+    <!-- Module 5: CRD -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 5 - Completely Randomized Design/index.html"
+         data-num="M5">
+      <div class="card-head">
+        <span class="lecture-num">Module 5</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Completely Randomized Design (CRD)</h3>
+      <p class="lecture-desc">The single factor fixed effects model in R, the ANOVA decomposition, the F test, model adequacy checks, Tukey HSD, and Bonferroni simultaneous intervals.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Module 6: RCBD -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 6 - Randomized Complete Block Design/index.html"
+         data-num="M6">
+      <div class="card-head">
+        <span class="lecture-num">Module 6</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Randomized Complete Block Design (RCBD)</h3>
+      <p class="lecture-desc">Blocking one nuisance factor out, the RCBD ANOVA in R, treatment and block effect estimation, residual diagnostics, and deciding whether blocking helped.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Module 7: LSD -->
+    <div class="lecture-card"
+         data-type="lecture"
+         data-url="Module 7 - Latin Square Design/index.html"
+         data-num="M7">
+      <div class="card-head">
+        <span class="lecture-num">Module 7</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Latin Square Design (LSD)</h3>
+      <p class="lecture-desc">Two nuisance factors handled in a p by p layout, the LSD ANOVA decomposition, the randomisation procedure, and when LSD is preferable to RCBD.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Open lecture →</span>
+      </div>
+    </div>
+
+    <!-- Exercise B: DoE -->
+    <div class="lecture-card exercise"
+         data-type="exercise"
+         data-url="Exercise Class B - Design of Experiment Block/index.html"
+         data-num="EB">
+      <div class="card-head">
+        <span class="lecture-num">Exercise B</span>
+        <span class="status-badge badge-checking">Checking…</span>
+      </div>
+      <h3 class="lecture-title">Exercise Class B, Design of Experiment Block</h3>
+      <p class="lecture-desc">A graded practice set covering CRD, RCBD, and Latin Square on agronomy, textile, and aquaculture style data, with the full R workflow from data to ANOVA to interpretation.</p>
+      <div class="card-foot">
+        <span class="duration">⏱ Lab session</span>
+        <span class="action">Start exercises →</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div><strong>Statistical Computing I</strong> · AST 232 · Batch 31</div>
+    <div style="margin-top: 4px;">Institute of Statistical Research and Training (ISRT), University of Dhaka</div>
+    <div class="footer-links">
+      <span>Instructor: K.M. Tanvir</span>
+      <span>•</span>
+      <span>kmtanvir@isrt.ac.bd</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ===== AUTO-DETECT WHICH MODULES / EXERCISES ARE AVAILABLE =====
+// Pure file-presence detection. A module card becomes "Available" only if its
+// data-url file actually responds OK from the server (i.e., it has been pushed
+// to GitHub). To release a module, just commit and push its folder, no edits to
+// this file required. To unrelease, remove the folder from the deploy.
+//
+// Optional override: add data-force-locked="true" to any card to keep it locked
+// even when the file is present (useful for previewing locally with all files
+// available, but only releasing some publicly).
+
+async function fileExists(url) {
+  // Cache-bust so newly uploaded files appear immediately on refresh
+  const bust = url + (url.includes('?') ? '&' : '?') + '_=' + Date.now();
+  try {
+    // HEAD is lighter; fall back to GET if HEAD isn't supported
+    let res = await fetch(bust, { method: 'HEAD', cache: 'no-store' });
+    if (!res.ok && res.status !== 405) {
+      res = await fetch(bust, { method: 'GET', cache: 'no-store' });
+    } else if (res.status === 405) {
+      // Some hosts return 405 (Method Not Allowed) on HEAD; retry with GET
+      res = await fetch(bust, { method: 'GET', cache: 'no-store' });
+    }
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function markAvailable(card, url) {
+  const badge = card.querySelector('.status-badge');
+  card.classList.remove('locked');
+  card.classList.add('available');
+  badge.className = 'status-badge badge-available';
+  badge.textContent = 'Available';
+  const action = card.querySelector('.action');
+  if (action) action.textContent = 'Open lecture →';
+  card.addEventListener('click', () => { window.location.href = url; });
+}
+
+function markLocked(card) {
+  const badge = card.querySelector('.status-badge');
+  card.classList.remove('available');
+  card.classList.add('locked');
+  badge.className = 'status-badge badge-locked';
+  badge.textContent = 'Coming soon';
+  const action = card.querySelector('.action');
+  if (action) action.textContent = 'Not yet released';
+}
+
+async function probeCard(card) {
+  if (card.getAttribute('data-force-locked') === 'true') {
+    markLocked(card);
+    return false;
+  }
+  const url = card.getAttribute('data-url');
+  if (!url) return false;
+  const ok = await fileExists(url);
+  if (ok) {
+    markAvailable(card, url);
+    return true;
+  }
+  markLocked(card);
+  return false;
+}
+
+function updateCounters(availableCount, totalCount) {
+  const upcoming = Math.max(0, totalCount - availableCount);
+  document.getElementById('count-available').textContent = availableCount;
+  document.getElementById('count-upcoming').textContent = upcoming;
+  document.getElementById('count-total').textContent = totalCount;
+  const pct = totalCount > 0 ? Math.round((availableCount / totalCount) * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent =
+    availableCount + ' of ' + totalCount + ' modules released (' + pct + '%)';
+}
+
+async function init() {
+  // Only count module cards (lecture + exercise), not resource references.
+  const allCards = document.querySelectorAll('.lecture-card:not(.resource-card)');
+  const totalCards = allCards.length;
+
+  // Probe every module card with a data-url; counters update once all probes settle.
+  const probeCards = document.querySelectorAll('.lecture-card:not(.resource-card)[data-url]');
+  const results = await Promise.all(Array.from(probeCards).map(probeCard));
+  const probedAvailable = results.filter(Boolean).length;
+
+  updateCounters(probedAvailable, totalCards);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
