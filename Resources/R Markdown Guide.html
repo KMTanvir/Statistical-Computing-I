@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R Markdown Guide for AST 232 Exams</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #faf5ff; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+  --accent: #6d28d9; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2;
+  --info: #2563eb; --info-light: #dbeafe;
+  --border: #ddd6fe; --border-soft: #ede9fe;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.doc-header { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.doc-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.doc-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.doc-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.doc-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.doc-header p.subtitle { font-size: 15px; opacity: 0.92; max-width: 720px; position: relative; z-index: 1; }
+header.doc-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.doc-header p.instructor strong { font-weight: 700; }
+
+.toc { background: white; padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 22px; border-left: 4px solid var(--primary); }
+.toc h3 { color: var(--primary-dark); font-size: 15px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.toc-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 20px; margin: 0; }
+.toc-list li { margin: 0; }
+.toc-list a { color: var(--primary); text-decoration: none; font-size: 14px; display: block; padding: 4px 0; transition: color var(--transition); }
+.toc-list a:hover { color: var(--primary-dark); text-decoration: underline; }
+.toc-list a::before { content: "§ "; color: var(--muted); font-weight: 700; margin-right: 4px; }
+
+.section { background: white; padding: 26px 28px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; scroll-margin-top: 20px; }
+.section h2 { color: var(--primary-dark); font-size: 22px; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--border-soft); display: flex; align-items: baseline; gap: 10px; }
+.section h2 .num { color: var(--primary); font-size: 15px; font-weight: 600; background: var(--primary-light); padding: 3px 10px; border-radius: 8px; }
+.section h3 { color: var(--text); font-size: 17px; font-weight: 600; margin: 20px 0 8px; }
+.section p { color: #334155; margin-bottom: 12px; }
+.section ul, .section ol { margin: 0 0 14px 22px; }
+.section li { margin-bottom: 6px; color: #334155; }
+
+.example-box { background: var(--info-light); border-left: 4px solid var(--info); padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.example-box strong { color: var(--info); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: #fef3c7; border-left: 4px solid #d97706; padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.warn-box strong { color: #b45309; }
+
+code { background: #ede9fe; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #6d28d9; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+.md-h { color: #fbbf24; font-weight: 600; }
+.md-em { color: #fcd34d; font-style: italic; }
+.md-strong { color: #fca5a5; font-weight: 700; }
+.yaml-key { color: #7dd3fc; font-weight: 600; }
+.yaml-val { color: #fdba74; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border-soft); background: white; font-size: 13.5px; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #faf5ff; }
+table.data-table code { background: #ede9fe; font-size: 12.5px; }
+
+.back-top { position: fixed; bottom: 18px; right: 18px; background: var(--primary); border: none; color: white; padding: 10px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; box-shadow: var(--shadow-lg); font-family: inherit; font-weight: 500; transition: all var(--transition); z-index: 100; text-decoration: none; }
+.back-top:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.doc-header { padding: 22px 18px; }
+  header.doc-header h1 { font-size: 22px; }
+  .section { padding: 20px 18px; }
+  .toc-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="top">
+
+<header class="doc-header">
+  <span class="badge">ISRT • AST 232 • Reference</span>
+  <h1>R Markdown Guide for AST 232 Exams</h1>
+  <p class="subtitle">A take home reference for writing exam and assignment solutions in R Markdown. All exam submissions in this course should be a knitted <code>.pdf</code> or <code>.html</code> generated from an <code>.Rmd</code> source.</p>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul class="toc-list">
+    <li><a href="#what">1. What is R Markdown</a></li>
+    <li><a href="#setup">2. One time setup</a></li>
+    <li><a href="#anatomy">3. Anatomy of an .Rmd file</a></li>
+    <li><a href="#yaml">4. The YAML header</a></li>
+    <li><a href="#text">5. Text formatting</a></li>
+    <li><a href="#chunks">6. R code chunks</a></li>
+    <li><a href="#options">7. Chunk options cheat sheet</a></li>
+    <li><a href="#inline">8. Inline R code</a></li>
+    <li><a href="#tables">9. Nice tables with knitr::kable</a></li>
+    <li><a href="#plots">10. Plots and figures</a></li>
+    <li><a href="#math">11. Math equations</a></li>
+    <li><a href="#knit">12. Knitting to PDF, HTML, Word</a></li>
+    <li><a href="#template">13. Ready to paste AST 232 exam template</a></li>
+    <li><a href="#troubleshoot">14. Common issues and fixes</a></li>
+  </ul>
+</div>
+
+<div class="section" id="what">
+  <h2><span class="num">§ 1</span>What is R Markdown</h2>
+  <p>R Markdown is a plain text file (<code>.Rmd</code>) that mixes three things: normal prose written in Markdown, R code inside "chunks" that runs when you knit the file, and math or tables. When you press <strong>Knit</strong> in RStudio, the file compiles into a polished PDF, HTML, or Word document with your code, its output, and your interpretation all in one place.</p>
+
+  <div class="example-box">
+    <strong>Why we use it for exams.</strong> Your answer script is only as trustworthy as the code that produced it. R Markdown pairs each computed number with the exact R that produced it. There is no chance of the code and the answer getting out of sync, and no chance of typos in copied numbers.
+  </div>
+
+  <h3>What a knitted output looks like</h3>
+  <p>You write prose, followed by a code chunk. When knitted, the reader sees:</p>
+  <ol>
+    <li>Your prose, rendered normally.</li>
+    <li>The R code itself, in a grey box (like the code blocks on this page).</li>
+    <li>The output of that code (numbers, tables, plots) right underneath.</li>
+    <li>Your interpretation, back in prose.</li>
+  </ol>
+</div>
+
+<div class="section" id="setup">
+  <h2><span class="num">§ 2</span>One Time Setup</h2>
+  <p>Everything you need ships with RStudio. Only a small install step is needed the first time.</p>
+
+<pre><code><span class="r-cm"># In the R console, once per machine</span>
+<span class="r-func">install.packages</span>(<span class="r-func">c</span>(<span class="r-str">"rmarkdown"</span>, <span class="r-str">"knitr"</span>))
+
+<span class="r-cm"># For PDF output, you also need a LaTeX distribution.</span>
+<span class="r-cm"># The lightweight option that just works everywhere:</span>
+<span class="r-func">install.packages</span>(<span class="r-str">"tinytex"</span>)
+tinytex<span class="r-op">::</span><span class="r-func">install_tinytex</span>()   <span class="r-cm"># run once, takes 5-10 minutes</span></code></pre>
+
+  <div class="tip-box">
+    <strong>Create a new .Rmd file:</strong> in RStudio, click <strong>File → New File → R Markdown...</strong>, give it a title and author, choose the output format, and RStudio drops a template <code>.Rmd</code> into the editor. Save it with a descriptive name like <code>ast232_final_2026.Rmd</code>.
+  </div>
+</div>
+
+<div class="section" id="anatomy">
+  <h2><span class="num">§ 3</span>Anatomy of an .Rmd File</h2>
+  <p>Every R Markdown document has three parts, always in this order.</p>
+
+<pre><code><span class="r-cm">---
+title: "AST 232 Final Exam Solutions"
+author: "Your Name, Roll 12345"
+date: "2026-08-10"
+output: pdf_document
+---</span>
+
+<span class="md-h"># Introduction</span>
+
+Prose goes here. Write in <span class="md-strong">**bold**</span> and <span class="md-em">*italic*</span>
+just like in normal Markdown.
+
+<span class="md-h">## Question 1</span>
+
+The next block is an R code chunk. Everything between the triple
+backticks runs when we knit.
+
+```{r q1-anova}
+data(iris)
+model &lt;- aov(Sepal.Length ~ Species, data = iris)
+summary(model)
+```
+
+Interpretation of the ANOVA goes here, again in prose.</code></pre>
+
+  <ul>
+    <li>The <strong>YAML header</strong> at the top (between the two <code>---</code> lines) tells knitr what to build and how.</li>
+    <li>The <strong>body</strong> is Markdown prose plus math.</li>
+    <li>The <strong>chunks</strong> are R code fenced by <code>```{r}</code> and <code>```</code>. Give each chunk a short name (like <code>q1-anova</code>) to help debugging.</li>
+  </ul>
+</div>
+
+<div class="section" id="yaml">
+  <h2><span class="num">§ 4</span>The YAML Header</h2>
+  <p>Only three fields matter for exam submissions: <code>title</code>, <code>author</code>, and <code>output</code>.</p>
+
+<pre><code>---
+<span class="yaml-key">title</span>:  <span class="yaml-val">"AST 232 Final Exam Solutions"</span>
+<span class="yaml-key">author</span>: <span class="yaml-val">"K.M. Tanvir, Roll 20221234"</span>
+<span class="yaml-key">date</span>:   <span class="yaml-val">"2026-08-10"</span>
+<span class="yaml-key">output</span>: <span class="yaml-val">pdf_document</span>
+---</code></pre>
+
+  <p>Any of <code>pdf_document</code>, <code>html_document</code>, or <code>word_document</code> works. If knitting fails on your machine for any reason, submit the raw <code>.Rmd</code> file itself; it will still be graded.</p>
+
+  <div class="tip-box">
+    <strong>Optional polish.</strong> To automatically number sections and show a table of contents:
+    <pre style="margin-top: 8px;"><code>output:
+  pdf_document:
+    toc: true
+    number_sections: true</code></pre>
+  </div>
+</div>
+
+<div class="section" id="text">
+  <h2><span class="num">§ 5</span>Text Formatting</h2>
+  <p>The body is plain Markdown. Everything below works in every knitted output.</p>
+
+  <table class="data-table">
+    <thead><tr><th>You type</th><th>You get</th></tr></thead>
+    <tbody>
+      <tr><td><code># Heading 1</code></td><td>Largest heading</td></tr>
+      <tr><td><code>## Heading 2</code></td><td>Section heading (use for each question)</td></tr>
+      <tr><td><code>### Heading 3</code></td><td>Sub section (part (a), (b), (c))</td></tr>
+      <tr><td><code>**bold**</code></td><td><strong>bold</strong></td></tr>
+      <tr><td><code>*italic*</code></td><td><em>italic</em></td></tr>
+      <tr><td><code>`code`</code></td><td><code>code</code></td></tr>
+      <tr><td><code>[link text](url)</code></td><td>hyperlink</td></tr>
+      <tr><td><code>- item</code> or <code>* item</code></td><td>bullet list</td></tr>
+      <tr><td><code>1. item</code></td><td>numbered list</td></tr>
+      <tr><td><code>&gt; quote</code></td><td>blockquote</td></tr>
+      <tr><td><em>empty line</em></td><td>new paragraph</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section" id="chunks">
+  <h2><span class="num">§ 6</span>R Code Chunks</h2>
+  <p>A chunk starts with <code>```{r}</code> and ends with <code>```</code>, each on its own line. Everything between runs as R code.</p>
+
+<pre><code>```{r q1-solution}
+<span class="r-cm"># Compute the sex ratio</span>
+M <span class="r-op">&lt;-</span> <span class="r-num">157500</span>
+F <span class="r-op">&lt;-</span> <span class="r-num">162500</span>
+SR <span class="r-op">&lt;-</span> M <span class="r-op">/</span> F <span class="r-op">*</span> <span class="r-num">100</span>
+<span class="r-func">round</span>(SR, <span class="r-num">2</span>)
+```</code></pre>
+
+  <p>When knitted, the reader sees the code (in a grey box), then the output <code>[1] 96.92</code>. If a chunk produces a plot, the plot appears inline.</p>
+
+  <div class="tip-box">
+    <strong>Insert a chunk quickly.</strong> In RStudio press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>I</kbd> on Windows / Linux, or <kbd>Cmd</kbd> + <kbd>Option</kbd> + <kbd>I</kbd> on Mac. The whole fence appears at the cursor.
+  </div>
+</div>
+
+<div class="section" id="options">
+  <h2><span class="num">§ 7</span>Chunk Options Cheat Sheet</h2>
+  <p>Options go inside the curly braces after <code>r</code>, comma separated: <code>```{r my-chunk, echo=FALSE, message=FALSE}</code>. The most useful ones:</p>
+
+  <table class="data-table">
+    <thead><tr><th>Option</th><th>Effect</th><th>Common use</th></tr></thead>
+    <tbody>
+      <tr><td><code>echo</code></td><td>Show the code in the output</td><td><code>echo = FALSE</code> hides code but keeps the result</td></tr>
+      <tr><td><code>eval</code></td><td>Actually run the code</td><td><code>eval = FALSE</code> shows code without running it</td></tr>
+      <tr><td><code>include</code></td><td>Show anything at all</td><td><code>include = FALSE</code> runs silently, hides both code and output. Great for setup chunks.</td></tr>
+      <tr><td><code>message</code></td><td>Print R's messages</td><td><code>message = FALSE</code> to hide "Attaching package" chatter</td></tr>
+      <tr><td><code>warning</code></td><td>Print R's warnings</td><td><code>warning = FALSE</code> for cleaner output</td></tr>
+      <tr><td><code>results</code></td><td>How to render results</td><td><code>results = 'hide'</code> to run silently, <code>'asis'</code> for raw HTML/LaTeX output</td></tr>
+      <tr><td><code>fig.width</code>, <code>fig.height</code></td><td>Plot size in inches</td><td><code>fig.width = 6, fig.height = 4</code> for a compact chart</td></tr>
+      <tr><td><code>fig.cap</code></td><td>Figure caption</td><td><code>fig.cap = "Rice yield by fertilizer"</code></td></tr>
+      <tr><td><code>fig.align</code></td><td>Alignment</td><td><code>fig.align = 'center'</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Global defaults for the whole document</h3>
+  <p>Set once at the top of the document with a setup chunk, then every later chunk inherits the defaults.</p>
+
+<pre><code>```{r setup, include=FALSE}
+knitr<span class="r-op">::</span>opts_chunk<span class="r-op">$</span><span class="r-func">set</span>(
+  echo    <span class="r-op">=</span> <span class="r-kw">TRUE</span>,       <span class="r-cm"># show code by default</span>
+  message <span class="r-op">=</span> <span class="r-kw">FALSE</span>,      <span class="r-cm"># hide package chatter</span>
+  warning <span class="r-op">=</span> <span class="r-kw">FALSE</span>,      <span class="r-cm"># hide warnings from the reader</span>
+  fig.width  <span class="r-op">=</span> <span class="r-num">6</span>,
+  fig.height <span class="r-op">=</span> <span class="r-num">4</span>,
+  fig.align  <span class="r-op">=</span> <span class="r-str">"center"</span>
+)
+```</code></pre>
+</div>
+
+<div class="section" id="inline">
+  <h2><span class="num">§ 8</span>Inline R Code</h2>
+  <p>Sometimes you want a single R value in the middle of a sentence. Wrap it in <code>`r ... `</code> (backtick, r, space, code, backtick).</p>
+
+<pre><code>The mean rice yield was <span class="r-func">`r `</span><span class="r-func">round</span>(<span class="r-func">mean</span>(rice<span class="r-op">$</span>yield), <span class="r-num">2</span>)<span class="r-func">`</span> Mg/ha,
+with a sample standard deviation of <span class="r-func">`r `</span><span class="r-func">round</span>(<span class="r-func">sd</span>(rice<span class="r-op">$</span>yield), <span class="r-num">2</span>)<span class="r-func">`</span>.</code></pre>
+
+  <p>When knitted this reads as: "The mean rice yield was 4.78 Mg/ha, with a sample standard deviation of 0.66." No manual copy paste.</p>
+
+  <div class="tip-box">
+    <strong>Reproducibility win.</strong> If the data changes, the numbers in your prose update automatically on the next knit. This is exactly why we grade R Markdown submissions.
+  </div>
+</div>
+
+<div class="section" id="tables">
+  <h2><span class="num">§ 9</span>Nice Tables with knitr::kable</h2>
+  <p>Plain R output like an ANOVA table prints as monospaced text, which reads fine but is not publication grade. <code>knitr::kable()</code> renders any data frame as a formatted table.</p>
+
+<pre><code>```{r anova-table}
+model <span class="r-op">&lt;-</span> <span class="r-func">aov</span>(yield <span class="r-op">~</span> treat, data <span class="r-op">=</span> rice)
+knitr<span class="r-op">::</span><span class="r-func">kable</span>(
+  <span class="r-func">summary</span>(model)[[<span class="r-num">1</span>]],
+  digits  <span class="r-op">=</span> <span class="r-num">3</span>,
+  caption <span class="r-op">=</span> <span class="r-str">"ANOVA table for the rice fertilizer trial"</span>
+)
+```</code></pre>
+
+  <div class="example-box">
+    <strong>Handy arguments to kable.</strong> <code>digits</code> controls rounding, <code>caption</code> adds a numbered caption, <code>col.names</code> renames the columns, <code>align = 'lrrr'</code> sets alignment column by column (l, c, r).
+  </div>
+</div>
+
+<div class="section" id="plots">
+  <h2><span class="num">§ 10</span>Plots and Figures</h2>
+  <p>Every base R plot inside a chunk lands in the knitted output automatically. No <code>ggsave</code> or file handling needed.</p>
+
+<pre><code>```{r yield-boxplot, fig.width=6, fig.height=4, fig.cap="Yield by fertilizer"}
+<span class="r-func">boxplot</span>(yield <span class="r-op">~</span> treat, data <span class="r-op">=</span> rice,
+        col <span class="r-op">=</span> <span class="r-str">"#dbeafe"</span>, border <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+        xlab <span class="r-op">=</span> <span class="r-str">"Fertilizer"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Yield (Mg/ha)"</span>)
+```</code></pre>
+
+  <p>Two things to remember:</p>
+  <ul>
+    <li>The chunk name (here <code>yield-boxplot</code>) becomes the filename of the generated figure.</li>
+    <li>Set <code>fig.width</code> and <code>fig.height</code> per chunk for anything unusual. Default globals cover 95% of cases.</li>
+  </ul>
+</div>
+
+<div class="section" id="math">
+  <h2><span class="num">§ 11</span>Math Equations</h2>
+  <p>Math uses LaTeX syntax and renders beautifully in every output format. Two flavours:</p>
+
+  <ul>
+    <li><strong>Inline</strong>: wrap in single dollar signs. <code>$\bar{y} = \frac{1}{n}\sum_{i=1}^n y_i$</code> renders as an inline equation.</li>
+    <li><strong>Display</strong>: wrap in double dollar signs on their own lines, for a centred equation on its own line.</li>
+  </ul>
+
+<pre><code>The Fergany method computes the probability of dying as
+$$
+_nq_x = 1 - e^{-n \cdot {_nM_x}}
+$$
+so the survivors column follows from $l_{x+n} = l_x \cdot _np_x$
+with $_np_x = 1 - {_nq_x}$.</code></pre>
+
+  <div class="example-box">
+    <strong>Common symbols.</strong> Greek letters: <code>\alpha, \beta, \tau, \sigma, \mu</code>. Fractions: <code>\frac{a}{b}</code>. Sums: <code>\sum_{i=1}^n x_i</code>. Subscripts: <code>x_i</code>. Superscripts: <code>x^2</code>. Bold vector: <code>\mathbf{x}</code>. Hat: <code>\hat{y}</code>.
+  </div>
+</div>
+
+<div class="section" id="knit">
+  <h2><span class="num">§ 12</span>Knitting to PDF, HTML, Word</h2>
+  <p>Once the file is written, press the <strong>Knit</strong> button in RStudio (or <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>). RStudio runs every chunk in order, then compiles the output.</p>
+
+  <table class="data-table">
+    <thead><tr><th>output: field</th><th>Produces</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>pdf_document</code></td><td>PDF via LaTeX</td><td>Requires <code>tinytex</code>. The standard for exam submissions.</td></tr>
+      <tr><td><code>html_document</code></td><td>Self contained HTML page</td><td>Best for lab work and quick previews.</td></tr>
+      <tr><td><code>word_document</code></td><td>Editable .docx</td><td>Useful when a supervisor needs to add comments in Word.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box">
+    <strong>Common gotcha.</strong> When knitting, the whole document runs in a <em>fresh</em> R session. If a chunk depends on a variable defined in an earlier chunk, that earlier chunk must be in the file too. Don't rely on things you typed in the console.
+  </div>
+</div>
+
+<div class="section" id="template">
+  <h2><span class="num">§ 13</span>Ready to Paste AST 232 Exam Template</h2>
+  <p>Copy this into a new <code>.Rmd</code> file to start your exam. Change the header, replace the placeholders, and knit.</p>
+
+<pre><code><span class="r-cm">---
+title: "AST 232 Final Exam Solutions"
+author: "Your Name, Roll 20221234"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+---</span>
+
+```{r setup, include=FALSE}
+knitr<span class="r-op">::</span>opts_chunk<span class="r-op">$</span><span class="r-func">set</span>(
+  echo    <span class="r-op">=</span> <span class="r-kw">TRUE</span>,
+  message <span class="r-op">=</span> <span class="r-kw">FALSE</span>,
+  warning <span class="r-op">=</span> <span class="r-kw">FALSE</span>,
+  fig.width <span class="r-op">=</span> <span class="r-num">6</span>, fig.height <span class="r-op">=</span> <span class="r-num">4</span>, fig.align <span class="r-op">=</span> <span class="r-str">"center"</span>
+)
+```
+
+<span class="md-h"># Question 1: Fertility measures for a district</span>
+
+<span class="md-h">## (a) Compute the Total Fertility Rate</span>
+
+```{r q1a}
+age_group  <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-str">"15-19"</span>, <span class="r-str">"20-24"</span>, <span class="r-str">"25-29"</span>, <span class="r-str">"30-34"</span>,
+                <span class="r-str">"35-39"</span>, <span class="r-str">"40-44"</span>, <span class="r-str">"45-49"</span>)
+female_pop <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">110000</span>, <span class="r-num">105000</span>, <span class="r-num">100000</span>, <span class="r-num">95000</span>,
+                <span class="r-num">85000</span>,  <span class="r-num">75000</span>,  <span class="r-num">65000</span>)
+births     <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">8000</span>, <span class="r-num">15000</span>, <span class="r-num">11000</span>, <span class="r-num">7000</span>,
+                <span class="r-num">2200</span>, <span class="r-num">600</span>,   <span class="r-num">100</span>)
+ASFR <span class="r-op">&lt;-</span> births <span class="r-op">/</span> female_pop <span class="r-op">*</span> <span class="r-num">1000</span>
+TFR  <span class="r-op">&lt;-</span> <span class="r-num">5</span> <span class="r-op">*</span> <span class="r-func">sum</span>(ASFR) <span class="r-op">/</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(TFR, <span class="r-num">3</span>)
+```
+
+The Total Fertility Rate is <span class="r-func">`r `</span><span class="r-func">round</span>(TFR, <span class="r-num">2</span>)<span class="r-func">`</span> children per woman,
+slightly above the replacement level of 2.10.
+
+<span class="md-h">## (b) Interpretation</span>
+
+Write your interpretation here in normal prose.
+
+<span class="md-h"># Question 2: Randomized Complete Block Design</span>
+
+<span class="md-h">## (a) Fit the ANOVA</span>
+
+```{r q2a}
+<span class="r-cm"># Type the data, fit the model, print the ANOVA</span>
+```
+
+<span class="md-h">## (b) Tukey HSD</span>
+
+```{r q2b}
+<span class="r-cm"># TukeyHSD on the treatment factor</span>
+```</code></pre>
+
+  <div class="tip-box">
+    <strong>Structuring habit.</strong> One heading per question, one sub heading per part. One R chunk per computational step. Prose in between. This makes the knitted PDF easy to grade and easy for you to debug.
+  </div>
+</div>
+
+<div class="section" id="troubleshoot">
+  <h2><span class="num">§ 14</span>Common Issues and Fixes</h2>
+
+  <h3>"object 'x' not found" when knitting</h3>
+  <p>You referred to a variable that was never defined <em>in the file</em>. Something you typed in the console works there but the knit session cannot see it. Put the definition in a chunk.</p>
+
+  <h3>PDF fails to build with a LaTeX error</h3>
+  <p>If TinyTeX is installed but the build fails, the missing LaTeX package usually installs itself the next time you knit. If the same error repeats, run <code>tinytex::reinstall_tinytex()</code> once.</p>
+
+  <h3>Plot looks squished or overflows the page</h3>
+  <p>Set <code>fig.width</code> and <code>fig.height</code> on the offending chunk. For a full page landscape figure try <code>fig.width = 8, fig.height = 5</code>.</p>
+
+  <h3>Every knit prints "Attaching package: dplyr" and other noise</h3>
+  <p>Add <code>message = FALSE</code> and <code>warning = FALSE</code> to your global setup chunk (see <a href="#options">Section 7</a>).</p>
+
+  <h3>Special characters (Bangla, math) render as ????</h3>
+  <p>Save the file as UTF 8 (File → Save with Encoding → UTF 8). For PDF, ensure the LaTeX engine supports the character set; for Bangla text prefer <code>xelatex</code> in the YAML: <code>output: pdf_document: latex_engine: xelatex</code>.</p>
+
+  <h3>The knit button greys out</h3>
+  <p>Close and reopen the <code>.Rmd</code> file. If the problem persists, save your work, restart RStudio, and try again.</p>
+</div>
+
+</div>
+
+<a href="#top" class="back-top">↑ Back to top</a>
+
+</body>
+</html>

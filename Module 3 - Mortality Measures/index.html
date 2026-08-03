@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 3: Mortality Measures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+.quiz-intro { background: white; padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.quiz-intro h2 { color: var(--primary-dark); margin-bottom: 8px; }
+.quiz-intro p { color: var(--muted); margin-bottom: 14px; }
+.quiz-question { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.quiz-question h4 { font-size: 16px; margin-bottom: 14px; color: var(--text); font-weight: 600; }
+.quiz-question .q-num { color: var(--primary); font-weight: 700; margin-right: 8px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { padding: 11px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: white; transition: all var(--transition); font-size: 14px; color: var(--text); text-align: left; font-family: inherit; }
+.quiz-option:hover { border-color: var(--primary); background: var(--primary-light); transform: translateX(2px); }
+.quiz-option.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 500; }
+.quiz-option.correct { border-color: var(--success); background: var(--success-light); color: var(--success); font-weight: 600; }
+.quiz-option.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+.quiz-option.disabled { pointer-events: none; }
+.quiz-explain { display: none; margin-top: 10px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid var(--primary); border-radius: 4px; font-size: 13px; color: #334155; }
+.quiz-explain.show { display: block; }
+.quiz-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); flex-wrap: wrap; }
+.quiz-progress-text { font-size: 13px; color: var(--muted); }
+.quiz-result { display: none; padding: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%); border-radius: var(--radius); text-align: center; margin-top: 16px; box-shadow: var(--shadow); animation: fadeIn 0.4s ease; }
+.quiz-result.show { display: block; }
+.quiz-result h3 { font-size: 24px; margin-bottom: 10px; color: var(--primary-dark); }
+.quiz-result .score { font-size: 48px; font-weight: 700; color: var(--primary); margin: 14px 0; line-height: 1; }
+.quiz-result .score .total { font-size: 26px; color: var(--muted); }
+.quiz-result p { color: #334155; margin-bottom: 16px; font-size: 15px; }
+.quiz-result .verdict { display: inline-block; padding: 6px 14px; border-radius: 16px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.quiz-result .verdict.great { background: var(--success-light); color: var(--success); }
+.quiz-result .verdict.good { background: var(--primary-light); color: var(--primary-dark); }
+.quiz-result .verdict.ok { background: var(--warning-light); color: var(--warning); }
+
+.flashcards-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.flashcards-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.flashcards-header p { color: var(--muted); font-size: 14px; }
+.flashcards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.flashcard { perspective: 1000px; height: 200px; cursor: pointer; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.55s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: var(--shadow); }
+.flashcard-front { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid var(--primary-light); color: var(--primary-dark); font-weight: 600; font-size: 17px; }
+.flashcard-front .hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 8px; font-style: italic; }
+.flashcard-back { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; transform: rotateY(180deg); font-size: 13px; line-height: 1.5; }
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.chart-svg { display: block; margin: 14px auto; max-width: 100%; height: auto; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ HEADER ============ -->
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 3</span>
+  <h1>Mortality Measures in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<!-- ============ STATS ============ -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="quizStat">—</div><div class="stat-label">Quiz Score</div></div>
+  <div class="stat"><div class="stat-value" id="flipStat">0</div><div class="stat-label">Cards Flipped</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<!-- ============ TABS ============ -->
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="quiz">📝 Quiz</button>
+  <button class="tab-btn" data-tab="flashcards">🃏 Flashcards</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+
+<!-- ============ SLIDES TAB ============ -->
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 9</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 3</h2>
+
+        <h3>Where mortality data comes from</h3>
+        <p>Before any rate is computed, the numbers have to come from somewhere. There are three sources you will meet throughout this module.</p>
+        <ul>
+          <li><strong>Vital Registration System.</strong> The primary source. Births and deaths are recorded continuously by civil registration authorities. In high coverage countries this is the gold standard.</li>
+          <li><strong>National Census.</strong> A periodic enumeration of the population. The standard source for the denominator (population at risk).</li>
+          <li><strong>National Sample Survey.</strong> Survey based estimates used in countries where vital registration is incomplete, such as the Bangladesh Sample Vital Registration System (SVRS).</li>
+        </ul>
+
+        <h3>What you will be able to compute by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li><strong>Crude Death Rate</strong>, the simplest mortality measure, with and without completeness adjustment</li>
+          <li><strong>Neonatal, Infant, and Child Mortality Rates</strong>, the infant and child specific measures</li>
+          <li><strong>Age Specific Death Rate</strong>, one rate per age band, and plot the mortality curve</li>
+          <li><strong>Direct standardisation</strong>, the cleanest way to compare mortality across populations with different age structures</li>
+          <li><strong>Indirect standardisation</strong>, the alternative when only total deaths and the age structure are known</li>
+        </ul>
+        <p style="margin-top: 14px; color: var(--muted); font-size: 14px;">When you are ready, click <strong>Next →</strong> to begin.</p>
+      </div>
+
+      <!-- SLIDE 2: Working dataset -->
+      <div class="slide" data-slide="2">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">Mymensingh District 2024, plus a reference standard population we will use for age standardisation.</p>
+
+        <p>We will work with an illustrative mortality table for <strong>Mymensingh District in 2024</strong>, six broad age bands with deaths and mid year population in each. We will also keep two completeness constants for the registration system, and a small reference standard population we will need on Slide 6.</p>
+
+        <h3>Create the data frame and the supporting constants</h3>
+<pre><code><span class="r-cm"># Mymensingh District, mid year 2024 (illustrative figures)</span>
+age_group  <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-str">"0-14"</span>, <span class="r-str">"15-29"</span>, <span class="r-str">"30-44"</span>,
+                 <span class="r-str">"45-59"</span>, <span class="r-str">"60-74"</span>, <span class="r-str">"75+"</span>)
+
+deaths     <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">560</span>, <span class="r-num">520</span>, <span class="r-num">1100</span>, <span class="r-num">2550</span>, <span class="r-num">9000</span>, <span class="r-num">18750</span>)
+
+population <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">1400000</span>, <span class="r-num">1300000</span>, <span class="r-num">1100000</span>,
+                 <span class="r-num">850000</span>,  <span class="r-num">600000</span>,  <span class="r-num">250000</span>)
+
+mort <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(age_group, deaths, population)
+
+<span class="r-cm"># Completeness of registration (fractions)</span>
+C_d <span class="r-op">&lt;-</span> <span class="r-num">0.88</span>      <span class="r-cm"># deaths registration is 88% complete</span>
+C_p <span class="r-op">&lt;-</span> <span class="r-num">0.92</span>      <span class="r-cm"># census coverage is 92% complete</span>
+
+<span class="r-cm"># Inputs for the infant and child mortality measures (Slide 4)</span>
+B            <span class="r-op">&lt;-</span> <span class="r-num">125000</span>   <span class="r-cm"># total live births in 2024</span>
+deaths_neo   <span class="r-op">&lt;-</span> <span class="r-num">1875</span>     <span class="r-cm"># deaths aged 0 to 28 days</span>
+deaths_inf   <span class="r-op">&lt;-</span> <span class="r-num">3000</span>     <span class="r-cm"># deaths aged 0 to 12 months</span>
+deaths_child <span class="r-op">&lt;-</span> <span class="r-num">1568</span>     <span class="r-cm"># deaths aged 1 to 4 years</span>
+P_1_4        <span class="r-op">&lt;-</span> <span class="r-num">448000</span>   <span class="r-cm"># mid year population aged 1 to 4</span>
+
+<span class="r-cm"># Reference standard population (per 100,000), used in Slide 6</span>
+std_pop <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">28000</span>, <span class="r-num">25000</span>, <span class="r-num">20000</span>, <span class="r-num">15000</span>, <span class="r-num">8000</span>, <span class="r-num">4000</span>)
+
+<span class="r-cm"># Standard age specific death rates (per 1000), used in Slide 8</span>
+M_std <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">0.4</span>, <span class="r-num">0.5</span>, <span class="r-num">1.2</span>, <span class="r-num">3.5</span>, <span class="r-num">17.0</span>, <span class="r-num">80.0</span>)
+M_std_crude <span class="r-op">&lt;-</span> <span class="r-num">5.56</span>   <span class="r-cm"># crude rate in the standard population (per 1000)</span></code></pre>
+
+        <h3>What the data frame looks like</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>age_group</th><th class="num">deaths</th><th class="num">population</th><th class="num">std_pop</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0-14</td><td class="num">560</td><td class="num">1,400,000</td><td class="num">28,000</td></tr>
+            <tr><td>15-29</td><td class="num">520</td><td class="num">1,300,000</td><td class="num">25,000</td></tr>
+            <tr><td>30-44</td><td class="num">1,100</td><td class="num">1,100,000</td><td class="num">20,000</td></tr>
+            <tr><td>45-59</td><td class="num">2,550</td><td class="num">850,000</td><td class="num">15,000</td></tr>
+            <tr><td>60-74</td><td class="num">9,000</td><td class="num">600,000</td><td class="num">8,000</td></tr>
+            <tr><td>75+</td><td class="num">18,750</td><td class="num">250,000</td><td class="num">4,000</td></tr>
+            <tr class="hl"><td><strong>Total</strong></td><td class="num"><strong>32,480</strong></td><td class="num"><strong>5,500,000</strong></td><td class="num"><strong>100,000</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>What the supporting constants are for</h3>
+        <ul>
+          <li><code>C_d</code>, <code>C_p</code>, completeness fractions, used on Slide 3 to correct the CDR.</li>
+          <li><code>B</code>, <code>deaths_neo</code>, <code>deaths_inf</code>, <code>deaths_child</code>, <code>P_1_4</code>, the inputs for the Neonatal, Infant, and Child Mortality Rates on Slide 4.</li>
+          <li><code>std_pop</code>, a reference standard age structure for Direct Standardisation on Slide 6.</li>
+          <li><code>M_std</code>, <code>M_std_crude</code>, a reference set of age specific death rates and the matching crude rate, used for Indirect Standardisation on Slide 7.</li>
+        </ul>
+
+        <div class="tip-box">
+          <strong>Why the reference standard population matters.</strong> A standard is just an arbitrary, fixed age distribution shared between the populations we want to compare. On Slide 6 we will apply <em>each</em> population's ASDR to this same standard, so any difference in the resulting rate is due to mortality, not to age structure.
+        </div>
+      </div>
+
+      <!-- SLIDE 3: CDR -->
+      <div class="slide" data-slide="3">
+        <h2>Crude Death Rate</h2>
+        <p>The Crude Death Rate is the simplest mortality measure: total deaths over total mid year population, expressed per 1,000 people.</p>
+
+        <div class="formula-box">
+          CDR &nbsp;=&nbsp; D &divide; P &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where D is the number of deaths during the year and P is the mid year total population.</p>
+
+        <h3>Compute it in R</h3>
+<pre><code>D <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(mort<span class="r-op">$</span>deaths)        <span class="r-cm"># 32,480 deaths in 2024</span>
+P <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(mort<span class="r-op">$</span>population)    <span class="r-cm"># 5,500,000 mid year population</span>
+
+CDR <span class="r-op">&lt;-</span> D <span class="r-op">/</span> P <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(CDR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 5.91</span></code></pre>
+
+        <p>So Mymensingh recorded about <strong>5.91 deaths per 1,000 people</strong> in 2024.</p>
+
+        <div class="warn-box">
+          <strong>Why "crude"?</strong> Just like CBR, the CDR denominator includes everyone, regardless of age. Two populations with the same age specific mortality but very different age structures will report very different CDRs. The next two slides fix this in two different ways.
+        </div>
+
+        <div class="practice" data-q="s3">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">A district with the same age specific death rates as Mymensingh, but with a younger overall population, would have a CDR that is:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">Higher</button>
+            <button class="practice-btn" data-correct="true">Lower</button>
+            <button class="practice-btn" data-correct="false">Exactly the same</button>
+            <button class="practice-btn" data-correct="false">Impossible to predict</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: CDR completeness -->
+      <div class="slide" data-slide="4">
+        <h2>Adjusting CDR for Completeness</h2>
+        <p>In many developing settings, the vital registration system misses some deaths and the census misses some people. When that happens, the raw CDR is biased. If we know the completeness of each, we can correct for it.</p>
+
+        <div class="formula-box">
+          CDR<sub>corrected</sub> &nbsp;=&nbsp; (D &divide; C<sub>d</sub>) &divide; (P &divide; C<sub>p</sub>) &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where C<sub>d</sub> is the fraction of true deaths that are registered, and C<sub>p</sub> is the fraction of the true population that is counted. Both fractions sit between 0 and 1.</p>
+
+        <h3>Equivalent shortcut</h3>
+        <p>A little algebra gives a simpler form:</p>
+        <div class="formula-box">
+          CDR<sub>corrected</sub> &nbsp;=&nbsp; CDR &nbsp;&times;&nbsp; C<sub>p</sub> &divide; C<sub>d</sub>
+        </div>
+
+        <h3>Compute both in R</h3>
+<pre><code><span class="r-cm"># The full formula, inflate D and P separately</span>
+CDR_corr1 <span class="r-op">&lt;-</span> (D <span class="r-op">/</span> C_d) <span class="r-op">/</span> (P <span class="r-op">/</span> C_p) <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(CDR_corr1, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 6.18</span>
+
+<span class="r-cm"># The shortcut, scale the crude CDR</span>
+CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <span class="r-op">/</span> C_d
+<span class="r-func">round</span>(CDR_corr2, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 6.18</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it:</strong> the raw CDR of 5.91 understates mortality because deaths are missed at a higher rate than the census misses people. Correcting raises the estimate to <strong>6.18 per 1,000</strong>.
+        </div>
+
+        <div class="tip-box">
+          <strong>When to apply the correction.</strong> Use the adjustment only when you have credible estimates of C<sub>d</sub> and C<sub>p</sub>, typically from a post enumeration survey or a sample registration system. Without those, the crude CDR is what you report, with a note on the registration system's known limitations.
+        </div>
+      </div>
+
+      <!-- SLIDE 5: NMR, IMR, CMR -->
+      <div class="slide" data-slide="5">
+        <h2>Neonatal, Infant, and Child Mortality</h2>
+        <p>These three measures isolate mortality at the very youngest ages, where deaths are highest and where most public health interventions are targeted. All three use live births in the denominator instead of population.</p>
+
+        <h3>Neonatal Mortality Rate (NMR)</h3>
+        <p>Deaths during the first 28 days of life per 1,000 live births.</p>
+        <div class="formula-box">
+          NMR &nbsp;=&nbsp; N &divide; B &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where N is neonatal deaths (0 to 28 days) and B is total live births in the same year.</p>
+
+<pre><code>NMR <span class="r-op">&lt;-</span> deaths_neo <span class="r-op">/</span> B <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(NMR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 15.00</span></code></pre>
+
+        <h3>Infant Mortality Rate (IMR)</h3>
+        <p>Deaths during the first year of life per 1,000 live births. Subsumes NMR.</p>
+        <div class="formula-box">
+          IMR &nbsp;=&nbsp; I &divide; B &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where I is infant deaths (0 to 12 months).</p>
+
+<pre><code>IMR <span class="r-op">&lt;-</span> deaths_inf <span class="r-op">/</span> B <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(IMR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 24.00</span></code></pre>
+
+        <h3>Child Mortality Rate (CMR)</h3>
+        <p>Deaths between exact ages 1 and 5 per 1,000 mid year population aged 1 to 4. Note that the denominator here is <em>population</em>, not live births, because by age 1 children are tracked through the census, not the birth register.</p>
+        <div class="formula-box">
+          CMR &nbsp;=&nbsp; C &divide; P<sub>1 to 4</sub> &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where C is deaths aged 1 to 4 and P<sub>1 to 4</sub> is the mid year population in that age range.</p>
+
+<pre><code>CMR <span class="r-op">&lt;-</span> deaths_child <span class="r-op">/</span> P_1_4 <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(CMR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 3.50</span></code></pre>
+
+        <h3>Results at a glance</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Measure</th><th>Formula</th><th class="num">Mymensingh 2024</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>NMR</td><td>N / B × 1000</td><td class="num">15.00</td></tr>
+            <tr><td>IMR</td><td>I / B × 1000</td><td class="num">24.00</td></tr>
+            <tr><td>CMR</td><td>C / P<sub>1-4</sub> × 1000</td><td class="num">3.50</td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>Why three separate measures?</strong> NMR captures conditions tied to birth (prematurity, birth asphyxia, infection at birth). The gap between IMR and NMR points to post neonatal causes such as diarrhoeal disease, acute respiratory infection, and undernutrition. CMR captures the residual under five mortality not driven by infancy. Tracking the three together separates problems with delivery care from problems with sanitation, vaccination, and child nutrition.
+        </div>
+      </div>
+
+      <!-- SLIDE 6: ASDR -->
+      <div class="slide" data-slide="6">
+        <h2>Age Specific Death Rate</h2>
+        <p>ASDR breaks mortality down by age band. For each band, divide the deaths in the band by the mid year population in the band. The result is a vector of rates that describes the mortality profile of the population.</p>
+
+        <div class="formula-box">
+          ASDR<sub>a</sub> &nbsp;=&nbsp; D<sub>a</sub> &divide; P<sub>a</sub> &nbsp;&times;&nbsp; 1000
+        </div>
+
+        <h3>Compute the full ASDR vector</h3>
+<pre><code>mort<span class="r-op">$</span>ASDR <span class="r-op">&lt;-</span> mort<span class="r-op">$</span>deaths <span class="r-op">/</span> mort<span class="r-op">$</span>population <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(mort[, <span class="r-func">c</span>(<span class="r-str">"age_group"</span>, <span class="r-str">"ASDR"</span>)], <span class="r-num">2</span>)
+<span class="r-cm">#&gt;   age_group  ASDR</span>
+<span class="r-cm">#&gt; 1      0-14  0.40</span>
+<span class="r-cm">#&gt; 2     15-29  0.40</span>
+<span class="r-cm">#&gt; 3     30-44  1.00</span>
+<span class="r-cm">#&gt; 4     45-59  3.00</span>
+<span class="r-cm">#&gt; 5     60-74 15.00</span>
+<span class="r-cm">#&gt; 6       75+ 75.00</span></code></pre>
+
+        <h3>Plot the mortality curve</h3>
+<pre><code><span class="r-func">plot</span>(mort<span class="r-op">$</span>ASDR, type <span class="r-op">=</span> <span class="r-str">"o"</span>, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>,
+     xaxt <span class="r-op">=</span> <span class="r-str">"n"</span>, xlab <span class="r-op">=</span> <span class="r-str">"Age group"</span>, ylab <span class="r-op">=</span> <span class="r-str">"ASDR (per 1000)"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Mymensingh 2024, Age Specific Mortality"</span>)
+<span class="r-func">axis</span>(<span class="r-num">1</span>, at <span class="r-op">=</span> <span class="r-num">1</span><span class="r-op">:</span><span class="r-num">6</span>, labels <span class="r-op">=</span> mort<span class="r-op">$</span>age_group)</code></pre>
+
+        <h3>What the curve looks like</h3>
+        <svg class="chart-svg" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ASDR curve for Mymensingh 2024">
+          <style>
+            .ax { stroke: #475569; stroke-width: 1; }
+            .gr { stroke: #e2e8f0; stroke-width: 1; }
+            .lbl { font: 11px Inter, sans-serif; fill: #475569; }
+            .ttl { font: bold 14px Inter, sans-serif; fill: #1e293b; }
+            .axl { font: 11px Inter, sans-serif; fill: #64748b; }
+            .pt { fill: #dc2626; }
+            .ln { stroke: #dc2626; stroke-width: 2; fill: none; }
+            .vl { font: 11px Inter, sans-serif; fill: #1e293b; font-weight: 600; }
+          </style>
+          <text x="320" y="18" text-anchor="middle" class="ttl">Mymensingh 2024, Age Specific Mortality</text>
+
+          <!-- Grid lines -->
+          <line x1="80" y1="40" x2="610" y2="40" class="gr"/>
+          <line x1="80" y1="107" x2="610" y2="107" class="gr"/>
+          <line x1="80" y1="175" x2="610" y2="175" class="gr"/>
+          <line x1="80" y1="242" x2="610" y2="242" class="gr"/>
+
+          <!-- Y axis -->
+          <line x1="80" y1="40" x2="80" y2="310" class="ax"/>
+          <text x="72" y="44" text-anchor="end" class="axl">80</text>
+          <text x="72" y="111" text-anchor="end" class="axl">60</text>
+          <text x="72" y="179" text-anchor="end" class="axl">40</text>
+          <text x="72" y="246" text-anchor="end" class="axl">20</text>
+          <text x="72" y="314" text-anchor="end" class="axl">0</text>
+          <text x="36" y="170" text-anchor="middle" class="axl" transform="rotate(-90 36 170)">ASDR (per 1000)</text>
+
+          <!-- X axis -->
+          <line x1="80" y1="310" x2="610" y2="310" class="ax"/>
+          <text x="115" y="328" text-anchor="middle" class="axl">0-14</text>
+          <text x="213" y="328" text-anchor="middle" class="axl">15-29</text>
+          <text x="311" y="328" text-anchor="middle" class="axl">30-44</text>
+          <text x="409" y="328" text-anchor="middle" class="axl">45-59</text>
+          <text x="507" y="328" text-anchor="middle" class="axl">60-74</text>
+          <text x="595" y="328" text-anchor="middle" class="axl">75+</text>
+          <text x="345" y="348" text-anchor="middle" class="axl">Age group</text>
+
+          <!-- Polyline through ASDR points: 0.4, 0.4, 1.0, 3.0, 15.0, 75.0 -->
+          <!-- y mapping: y = 310 - ASDR * 270/80 = 310 - ASDR * 3.375 -->
+          <!-- 0.4 -> 308.65 ; 1.0 -> 306.625 ; 3.0 -> 299.875 ; 15 -> 259.375 ; 75 -> 56.875 -->
+          <polyline class="ln"
+            points="115,309 213,309 311,307 409,300 507,259 595,57"/>
+
+          <circle cx="115" cy="309" r="5" class="pt"/>
+          <text x="115" y="300" text-anchor="middle" class="vl">0.4</text>
+
+          <circle cx="213" cy="309" r="5" class="pt"/>
+          <text x="213" y="300" text-anchor="middle" class="vl">0.4</text>
+
+          <circle cx="311" cy="307" r="5" class="pt"/>
+          <text x="311" y="298" text-anchor="middle" class="vl">1.0</text>
+
+          <circle cx="409" cy="300" r="5" class="pt"/>
+          <text x="409" y="291" text-anchor="middle" class="vl">3.0</text>
+
+          <circle cx="507" cy="259" r="5" class="pt"/>
+          <text x="507" y="250" text-anchor="middle" class="vl">15.0</text>
+
+          <circle cx="595" cy="57" r="5" class="pt"/>
+          <text x="595" y="48" text-anchor="middle" class="vl">75.0</text>
+        </svg>
+
+        <div class="example-box">
+          <strong>The classic J shape.</strong> Mortality is low and almost flat through young adulthood, then climbs steeply from middle age onwards. The 75+ rate is more than twenty times the rate at 60 to 74. If we want to compare populations fairly, we cannot ignore this age dependence, which is what brings us to standardisation.
+        </div>
+
+        <h3>CDR is a weighted average of ASDRs</h3>
+        <p>The two summaries are tied together algebraically. The Crude Death Rate is the population weighted average of the age specific rates, where the weights are the share of the population in each age band.</p>
+
+        <div class="formula-box">
+          CDR &nbsp;=&nbsp; &Sigma; ASDR<sub>a</sub> &nbsp;&times;&nbsp; (P<sub>a</sub> &divide; P)
+        </div>
+
+<pre><code><span class="r-cm"># Verify the identity</span>
+weights <span class="r-op">&lt;-</span> mort<span class="r-op">$</span>population <span class="r-op">/</span> <span class="r-func">sum</span>(mort<span class="r-op">$</span>population)
+<span class="r-func">sum</span>(mort<span class="r-op">$</span>ASDR <span class="r-op">*</span> weights)
+<span class="r-cm">#&gt; [1] 5.905   (matches the CDR computed on Slide 3)</span></code></pre>
+
+        <div class="tip-box">
+          <strong>Why this matters.</strong> Two populations can have the same ASDRs in every age band, but one is heavily skewed towards older ages while the other is skewed young. The age weighted average will be higher for the older population, even though the underlying mortality is identical. This is exactly why direct standardisation, coming up on Slide 7, replaces the population weights with a shared standard.
+        </div>
+      </div>
+
+      <!-- SLIDE 7: Direct standardisation -->
+      <div class="slide" data-slide="7">
+        <h2>Direct Standardisation</h2>
+        <p>Two populations with similar CDRs can have very different true mortality. The trick is to apply each population's age specific rates to one shared standard age structure, so age differences drop out of the comparison.</p>
+
+        <div class="formula-box">
+          <strong>Age standardised rate</strong> &nbsp;=&nbsp; &Sigma; (ASDR<sub>a</sub> &nbsp;&times;&nbsp; P<sub>std,a</sub>) &nbsp;&divide;&nbsp; &Sigma; P<sub>std,a</sub>
+        </div>
+        <p>The numerator is the deaths we would expect in the standard population if it had Mymensingh's mortality. Divide by the standard's total size and you get a comparable rate.</p>
+
+        <h3>Compute it in R</h3>
+<pre><code><span class="r-cm"># Expected deaths per standard person in each band</span>
+expected <span class="r-op">&lt;-</span> mort<span class="r-op">$</span>ASDR <span class="r-op">*</span> std_pop
+
+<span class="r-cm"># Age standardised death rate (per 1000)</span>
+ASR <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(expected) <span class="r-op">/</span> <span class="r-func">sum</span>(std_pop)
+<span class="r-func">round</span>(ASR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 5.06</span></code></pre>
+
+        <h3>Why this rescues the comparison</h3>
+        <p>Suppose Bogura District has a CDR very close to Mymensingh's, but a younger age structure. Applying the same standard to both populations strips out the age effect and shows which one really has higher mortality at every age.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>Measure</th><th class="num">Mymensingh 2024</th><th class="num">Bogura 2024 (exercises)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Crude Death Rate</td><td class="num">5.91</td><td class="num">5.81</td></tr>
+            <tr><td>Corrected CDR</td><td class="num">6.18</td><td class="num">6.31</td></tr>
+            <tr class="hl"><td><strong>Age Standardised Rate</strong></td><td class="num"><strong>5.06</strong></td><td class="num"><strong>8.38</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>What standardisation revealed.</strong> The crude rates suggested almost identical mortality. After standardising, Bogura's age standardised rate is about 65% higher than Mymensingh's, because Bogura's younger age structure was masking heavier mortality at every age band. You will work through this calculation for Bogura in the Exercises.
+        </div>
+
+        <div class="tip-box">
+          <strong>When direct standardisation is not possible.</strong> Direct standardisation needs reliable ASDRs for the study population. When those are not available, only total deaths and the age structure, we switch to the indirect method covered on Slide 8.
+        </div>
+
+        <div class="practice" data-q="s7">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">If two populations have identical ASDRs in every age band, but very different age structures, the age standardised rate from direct standardisation will:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">Differ in the direction of the older population</button>
+            <button class="practice-btn" data-correct="false">Differ in the direction of the younger population</button>
+            <button class="practice-btn" data-correct="true">Be identical for both</button>
+            <button class="practice-btn" data-correct="false">Depend on which standard is chosen</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Indirect standardisation -->
+      <div class="slide" data-slide="8">
+        <h2>Indirect Standardisation</h2>
+        <p>Direct standardisation needed each population's age specific death rates. When you only have the total death count and the age structure, the indirect method gives you a comparable rate by going in the opposite direction: apply a <em>standard</em> set of ASDRs to the study population.</p>
+
+        <h3>The Standardised Mortality Ratio (SMR)</h3>
+        <p>First compute the deaths we would <em>expect</em> in the study population if it had the standard's age specific mortality. Then divide observed deaths by expected.</p>
+
+        <div class="formula-box">
+          <strong>Expected deaths</strong> &nbsp;=&nbsp; &Sigma; (M<sub>std,a</sub> &nbsp;&times;&nbsp; P<sub>obs,a</sub>) &divide; 1000<br><br>
+          <strong>SMR</strong> &nbsp;=&nbsp; D<sub>observed</sub> &divide; expected deaths
+        </div>
+
+        <p>SMR is a unitless ratio. SMR = 1 means the study matches the standard, SMR &gt; 1 means heavier mortality than the standard, SMR &lt; 1 means lighter.</p>
+
+        <h3>From SMR to an indirectly standardised rate</h3>
+        <p>Multiplying SMR by the standard's crude rate gives a rate on the same per 1,000 scale as a CDR.</p>
+        <div class="formula-box">
+          <strong>Indirectly standardised rate</strong> &nbsp;=&nbsp; SMR &nbsp;&times;&nbsp; M<sub>std,crude</sub>
+        </div>
+
+        <h3>Compute it in R</h3>
+<pre><code><span class="r-cm"># Total observed deaths in Mymensingh</span>
+D_obs <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(mort<span class="r-op">$</span>deaths)         <span class="r-cm"># 32,480</span>
+
+<span class="r-cm"># Expected deaths if Mymensingh had the standard's ASDRs</span>
+expected <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(M_std <span class="r-op">*</span> mort<span class="r-op">$</span>population) <span class="r-op">/</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(expected, <span class="r-num">0</span>)
+<span class="r-cm">#&gt; [1] 35705</span>
+
+<span class="r-cm"># Standardised Mortality Ratio</span>
+SMR <span class="r-op">&lt;-</span> D_obs <span class="r-op">/</span> expected
+<span class="r-func">round</span>(SMR, <span class="r-num">3</span>)
+<span class="r-cm">#&gt; [1] 0.910</span>
+
+<span class="r-cm"># Indirectly standardised death rate (per 1000)</span>
+IDR <span class="r-op">&lt;-</span> SMR <span class="r-op">*</span> M_std_crude
+<span class="r-func">round</span>(IDR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 5.06</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it:</strong> SMR = 0.910 means Mymensingh has about 9% fewer deaths than the standard's rates would predict. Multiplying SMR by the standard's crude rate (5.56) gives an indirectly standardised rate of <strong>5.06 per 1,000</strong>, exactly matching the direct standardisation result on Slide 7. Both methods agree on the same conclusion.
+        </div>
+
+        <h3>Direct or indirect, which to use?</h3>
+        <div class="compare-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Use direct when</th><th>Use indirect when</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>You have reliable age specific death rates for each population being compared.</td>
+              <td>Only total deaths and the age structure are available for the study population.</td>
+            </tr>
+            <tr>
+              <td>Populations are large enough that ASDRs are stable.</td>
+              <td>Some age bands have very few people, making their ASDRs unstable.</td>
+            </tr>
+            <tr>
+              <td>You want a clean rate comparable across many populations.</td>
+              <td>You want a single summary ratio (SMR) against a reference.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: Recap -->
+      <div class="slide" data-slide="9">
+        <h2>Recap</h2>
+        <p class="slide-subtitle">Eight mortality calculations and a sharp lesson about age structure.</p>
+
+        <h3>The recipe card</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Measure</th><th>Formula</th><th>R recipe</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CDR</td><td>D / P × 1000</td><td><code>sum(mort$deaths) / sum(mort$population) * 1000</code></td></tr>
+            <tr><td>Corrected CDR</td><td>CDR × C<sub>p</sub> / C<sub>d</sub></td><td><code>CDR * C_p / C_d</code></td></tr>
+            <tr><td>NMR</td><td>N / B × 1000</td><td><code>deaths_neo / B * 1000</code></td></tr>
+            <tr><td>IMR</td><td>I / B × 1000</td><td><code>deaths_inf / B * 1000</code></td></tr>
+            <tr><td>CMR</td><td>C / P<sub>1-4</sub> × 1000</td><td><code>deaths_child / P_1_4 * 1000</code></td></tr>
+            <tr><td>ASDR<sub>a</sub></td><td>D<sub>a</sub> / P<sub>a</sub> × 1000</td><td><code>mort$deaths / mort$population * 1000</code></td></tr>
+            <tr><td>Direct Standardised Rate</td><td>Σ (ASDR<sub>a</sub> × P<sub>std,a</sub>) / Σ P<sub>std,a</sub></td><td><code>sum(mort$ASDR * std_pop) / sum(std_pop)</code></td></tr>
+            <tr><td>SMR + Indirect Std Rate</td><td>D<sub>obs</sub> / Σ(M<sub>std,a</sub> × P<sub>obs,a</sub>) × M<sub>std,crude</sub></td><td><code>(D_obs / (sum(M_std * mort$population)/1000)) * M_std_crude</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Before next class</h3>
+        <ol>
+          <li>Take the <strong>Quiz</strong> to test the definitions, denominators, and both standardisation methods.</li>
+          <li>Flip the <strong>Flashcards</strong> until CDR, NMR, IMR, CMR, ASDR, direct and indirect standardisation feel automatic.</li>
+          <li>Work through the <strong>Exercises</strong> on the Bogura District dataset, and pay attention to the comparison story.</li>
+        </ol>
+
+        <div class="example-box">
+          <strong>Next module (Module 4):</strong> we bring fertility and mortality together. Constructing the complete life table column by column, and the abridged life table using the Fergany method with a radix of 100,000.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ TAB ============ -->
+<section id="quiz" class="tab-content">
+  <div class="quiz-intro">
+    <h2>📝 Quiz Time</h2>
+    <p>10 questions covering CDR, completeness adjustment, NMR, IMR, CMR, ASDR, and both standardisation methods.</p>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="quiz-footer">
+    <span class="quiz-progress-text" id="quizProgText">0 of 10 answered</span>
+    <button class="btn btn-primary" id="submitQuiz" disabled>Submit Answers</button>
+  </div>
+
+  <div class="quiz-result" id="quizResult">
+    <div class="verdict" id="quizVerdict">Great work!</div>
+    <h3>Your Score</h3>
+    <div class="score"><span id="scoreNum">0</span><span class="total">/10</span></div>
+    <p id="quizMessage">You have completed the Module 3 quiz.</p>
+    <button class="btn btn-ghost" id="retakeQuiz">↺ Retake Quiz</button>
+  </div>
+</section>
+
+<!-- ============ FLASHCARDS TAB ============ -->
+<section id="flashcards" class="tab-content">
+  <div class="flashcards-header">
+    <h2>🃏 Key Terms, Flashcards</h2>
+    <p>Click any card to flip it and see the definition.</p>
+  </div>
+  <div class="flashcards-grid" id="flashcardsGrid"></div>
+</section>
+
+<!-- ============ EXERCISES TAB ============ -->
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Bogura District 2024 (illustrative)</h2>
+    <p>All exercises use a second district so you apply the same recipes on fresh numbers. The dataset is given at the top of the prompt for Exercise 1. Reuse it for the rest.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 3">↺ Reset Progress</button>
+
+<script>
+/* ================================================================
+   MODULE 3, MORTALITY MEASURES IN R
+   ================================================================ */
+
+const STORAGE_KEY = 'statcomp1-module3-progress-v2';
+
+const state = {
+  currentSlide: 1,
+  totalSlides: 9,
+  maxSlideReached: 1,
+  quizAnswers: {},
+  quizScore: null,
+  quizSubmitted: false,
+  flashcardsFlipped: new Set(),
+  exercisesOpened: new Set(),
+  exerciseAnswers: {},
+  practiceAnswers: {}
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      flashcardsFlipped: [...state.flashcardsFlipped],
+      exercisesOpened: [...state.exercisesOpened]
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => {
+  if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1);
+});
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct
+        ? '✓ Correct!'
+        : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const quizData = [
+  {
+    q: "What does the Crude Death Rate measure?",
+    options: [
+      "Deaths per 1,000 women of reproductive age",
+      "Deaths per 1,000 mid year total population",
+      "Deaths per 1,000 deaths registered",
+      "Annual percentage decline of the population"
+    ],
+    answer: 1,
+    explain: "CDR = D / P × 1000. Total deaths in the year over total mid year population, expressed per 1,000."
+  },
+  {
+    q: "Why is the CDR called crude?",
+    options: [
+      "Because it excludes accidental deaths",
+      "Because the denominator includes everyone, regardless of age, so it is sensitive to age structure",
+      "Because it is calculated by hand rather than software",
+      "Because it ignores year of death registration"
+    ],
+    answer: 1,
+    explain: "CDR puts all deaths over the total population. Two populations with the same ASDRs but different age structures will have different CDRs, which is the problem standardisation fixes."
+  },
+  {
+    q: "Given completeness fractions C_d (deaths) and C_p (population), the corrected CDR is:",
+    options: [
+      "CDR × C_d / C_p",
+      "CDR × C_p / C_d",
+      "CDR + C_d − C_p",
+      "CDR / (C_d × C_p)"
+    ],
+    answer: 1,
+    explain: "True D = D / C_d and true P = P / C_p. Ratio gives CDR × C_p / C_d. If deaths are missed more than people, the correction inflates the rate."
+  },
+  {
+    q: "The Neonatal Mortality Rate (NMR) counts deaths in which age range, per which denominator?",
+    options: [
+      "Deaths aged 0 to 12 months per 1,000 live births",
+      "Deaths aged 0 to 28 days per 1,000 live births",
+      "Deaths aged 1 to 4 years per 1,000 children",
+      "Deaths aged 0 to 5 years per 1,000 mid year population"
+    ],
+    answer: 1,
+    explain: "NMR = N / B × 1000. The numerator is deaths in the first 28 days of life and the denominator is total live births in the same year."
+  },
+  {
+    q: "Which deaths are counted in the Infant Mortality Rate but NOT in the Neonatal Mortality Rate?",
+    options: [
+      "Deaths after age 28 days and before age 1 year",
+      "Deaths after age 1 year and before age 5 years",
+      "Stillbirths",
+      "Deaths to mothers during childbirth"
+    ],
+    answer: 0,
+    explain: "NMR covers 0 to 28 days. IMR covers the whole first year. So IMR additionally captures deaths from 29 days through 12 months, often called post neonatal deaths."
+  },
+  {
+    q: "The Child Mortality Rate (ages 1 to 4) uses which denominator?",
+    options: [
+      "Total live births in the year",
+      "Total population of the area",
+      "Mid year population aged 1 to 4",
+      "Number of mothers"
+    ],
+    answer: 2,
+    explain: "Unlike NMR and IMR, the CMR uses mid year population aged 1 to 4 in the denominator, not live births, because by age 1 children are tracked through the census."
+  },
+  {
+    q: "The Crude Death Rate is mathematically equivalent to:",
+    options: [
+      "The simple unweighted average of ASDRs",
+      "The maximum ASDR across age bands",
+      "The population weighted average of ASDRs, with each band's share of the population as the weight",
+      "The ASDR for the youngest band"
+    ],
+    answer: 2,
+    explain: "CDR = Σ (ASDR_a × P_a / P). The weights are the share of each age band in the total. That is why CDR shifts when age structure shifts, even if ASDRs are unchanged."
+  },
+  {
+    q: "The age standardised death rate by direct standardisation equals:",
+    options: [
+      "sum(ASDR × P_std) × sum(P_std)",
+      "sum(ASDR × P_std) / sum(P_std)",
+      "sum(ASDR) / sum(P_std)",
+      "mean(ASDR)"
+    ],
+    answer: 1,
+    explain: "Multiply each ASDR by the corresponding standard population, sum to get expected deaths in the standard, divide by the total standard size to get a comparable rate."
+  },
+  {
+    q: "An SMR (Standardised Mortality Ratio) of 1.20 means the study population has:",
+    options: [
+      "20% higher mortality than the standard would predict",
+      "20% lower mortality than the standard",
+      "Exactly 1.20 deaths per 1,000 people",
+      "120 expected deaths in total"
+    ],
+    answer: 0,
+    explain: "SMR = observed / expected. A value of 1.20 means observed deaths are 20% above what the standard's age specific rates would predict for this population."
+  },
+  {
+    q: "Which task is best handled by INDIRECT standardisation rather than direct?",
+    options: [
+      "Comparing two large countries with complete age specific mortality data",
+      "Comparing a small district where some age bands have only a handful of deaths, making ASDRs unstable",
+      "Computing the simple CDR",
+      "Estimating life expectancy at birth"
+    ],
+    answer: 1,
+    explain: "Indirect standardisation works well when ASDRs in the study population are unstable or unavailable. It only needs the total death count and the age structure, plus a set of standard ASDRs."
+  }
+];
+
+const quizContainer = document.getElementById('quizContainer');
+function renderQuiz() {
+  quizContainer.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `
+      <h4><span class="q-num">Q${i + 1}.</span>${q.q}</h4>
+      <div class="quiz-options" data-qi="${i}">
+        ${q.options.map((opt, j) => `<button class="quiz-option" data-choice="${j}">${opt}</button>`).join('')}
+      </div>
+      <div class="quiz-explain"><strong>Explanation:</strong> ${q.explain}</div>
+    `;
+    quizContainer.appendChild(div);
+  });
+  bindQuiz();
+  restoreQuizState();
+}
+function bindQuiz() {
+  quizContainer.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.quizSubmitted) return;
+      const parent = btn.parentElement;
+      const qi = +parent.dataset.qi;
+      parent.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.quizAnswers[qi] = +btn.dataset.choice;
+      updateQuizProgress();
+      saveState();
+    });
+  });
+}
+function updateQuizProgress() {
+  const answered = Object.keys(state.quizAnswers).length;
+  document.getElementById('quizProgText').textContent = `${answered} of ${quizData.length} answered`;
+  document.getElementById('submitQuiz').disabled = answered !== quizData.length || state.quizSubmitted;
+}
+function restoreQuizState() {
+  Object.entries(state.quizAnswers).forEach(([qi, choice]) => {
+    const opts = quizContainer.querySelector(`[data-qi="${qi}"]`);
+    if (!opts) return;
+    const btn = opts.querySelector(`[data-choice="${choice}"]`);
+    if (btn) btn.classList.add('selected');
+  });
+  if (state.quizSubmitted) revealQuizResults();
+  updateQuizProgress();
+}
+function revealQuizResults() {
+  let score = 0;
+  quizData.forEach((q, i) => {
+    const opts = quizContainer.querySelector(`[data-qi="${i}"]`);
+    if (!opts) return;
+    const chosen = state.quizAnswers[i];
+    opts.querySelectorAll('.quiz-option').forEach(b => {
+      b.classList.add('disabled');
+      const c = +b.dataset.choice;
+      if (c === q.answer) b.classList.add('correct');
+      else if (c === chosen) b.classList.add('wrong');
+    });
+    opts.parentElement.querySelector('.quiz-explain').classList.add('show');
+    if (chosen === q.answer) score++;
+  });
+  state.quizScore = score;
+  document.getElementById('scoreNum').textContent = score;
+  const msg = document.getElementById('quizMessage');
+  const verdict = document.getElementById('quizVerdict');
+  const pct = score / quizData.length;
+  if (pct >= 0.85) {
+    verdict.className = 'verdict great';
+    verdict.textContent = '🏆 Excellent!';
+    msg.textContent = "Mortality measures are in your R toolkit. Move on to the exercises.";
+  } else if (pct >= 0.6) {
+    verdict.className = 'verdict good';
+    verdict.textContent = '👍 Good work';
+    msg.textContent = "Solid. Review the wrong ones and try again if you'd like.";
+  } else {
+    verdict.className = 'verdict ok';
+    verdict.textContent = 'Keep going 💪';
+    msg.textContent = "Review the slides and flashcards, then retake.";
+  }
+  document.getElementById('quizResult').classList.add('show');
+  document.getElementById('submitQuiz').disabled = true;
+}
+document.getElementById('submitQuiz').addEventListener('click', () => {
+  state.quizSubmitted = true;
+  revealQuizResults();
+  updateStats();
+  saveState();
+});
+document.getElementById('retakeQuiz').addEventListener('click', () => {
+  state.quizAnswers = {};
+  state.quizScore = null;
+  state.quizSubmitted = false;
+  document.getElementById('quizResult').classList.remove('show');
+  renderQuiz();
+  updateQuizProgress();
+  updateStats();
+  saveState();
+});
+
+const flashcards = [
+  { term: "Crude Death Rate (CDR)", def: "CDR = D / P × 1000. Total deaths per 1,000 mid year population. Sensitive to age structure because the denominator includes everyone." },
+  { term: "Sources of mortality data", def: "Vital Registration System (continuous recording of deaths), National Census (denominator), and National Sample Survey (estimates when registration is incomplete, e.g. Bangladesh SVRS)." },
+  { term: "Completeness (C_d and C_p)", def: "C_d is the fraction of true deaths captured by registration; C_p is the fraction of the true population counted. Both lie between 0 and 1." },
+  { term: "Corrected CDR", def: "CDR × C_p / C_d. Inflates the raw CDR when deaths are missed more often than people, or shrinks it in the reverse case." },
+  { term: "Neonatal Mortality Rate (NMR)", def: "NMR = N / B × 1000. Deaths aged 0 to 28 days per 1,000 live births. Tied to conditions around birth (prematurity, asphyxia, infection)." },
+  { term: "Infant Mortality Rate (IMR)", def: "IMR = I / B × 1000. Deaths in the first year of life per 1,000 live births. Subsumes NMR. The gap IMR − NMR is post neonatal mortality." },
+  { term: "Child Mortality Rate (CMR)", def: "CMR = C / P(1 to 4) × 1000. Deaths aged 1 to 4 per 1,000 mid year population aged 1 to 4. Denominator switches from live births to population." },
+  { term: "Age Specific Death Rate (ASDR)", def: "ASDR_a = D_a / P_a × 1000. Deaths in age band a per 1,000 people in band a. The vector across bands is the mortality profile." },
+  { term: "CDR as a weighted average", def: "CDR = Σ ASDR_a × (P_a / P). The CDR is the population weighted average of ASDRs. This is exactly what standardisation replaces with shared weights." },
+  { term: "The J shaped mortality curve", def: "ASDR is low and almost flat through young adulthood, then rises steeply from middle age onwards. The 75+ rate is many times the 60 to 74 rate." },
+  { term: "Direct standardisation", def: "ASR = sum(ASDR_a × P_std_a) / sum(P_std_a). Applies the study population's ASDRs to a shared standard age structure so the comparison is age fair." },
+  { term: "Indirect standardisation", def: "Applies a standard set of ASDRs to the study population's age structure, then compares observed and expected deaths via SMR. Used when study ASDRs are unstable or unavailable." },
+  { term: "Standardised Mortality Ratio (SMR)", def: "SMR = observed deaths / expected deaths under standard ASDRs. SMR = 1 matches the standard; > 1 means higher mortality, < 1 means lower." },
+  { term: "Indirectly standardised rate", def: "SMR × M_std_crude. Multiplying SMR by the standard's crude rate puts the indirect result on the same per 1,000 scale as a CDR." }
+];
+const fcGrid = document.getElementById('flashcardsGrid');
+flashcards.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'flashcard';
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="flashcard-inner">
+      <div class="flashcard-front">
+        ${c.term}
+        <span class="hint">click to flip</span>
+      </div>
+      <div class="flashcard-back">${c.def}</div>
+    </div>
+  `;
+  card.addEventListener('click', () => {
+    card.classList.toggle('flipped');
+    if (card.classList.contains('flipped')) state.flashcardsFlipped.add(i);
+    updateStats();
+    saveState();
+  });
+  fcGrid.appendChild(card);
+});
+function restoreFlashcards() {
+  fcGrid.querySelectorAll('.flashcard').forEach(c => {
+    if (state.flashcardsFlipped.has(+c.dataset.idx)) c.classList.add('flipped');
+  });
+}
+
+const exercises = [
+  {
+    title: "1. Build the Bogura data frame and supporting constants, then compute CDR",
+    diff: "easy",
+    prompt: "The block below gives the Bogura District 2024 mortality table plus the inputs you will need for infant and child mortality (Exercise 3) and indirect standardisation (Exercise 6). Type it into R as a data frame <code>bog</code> plus the supporting constants, then compute the <strong>Crude Death Rate</strong>. Round to two decimals.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>age_group:  0-14, 15-29, 30-44, 45-59, 60-74, 75+\ndeaths:     630, 700, 1190, 3150, 7000, 8400\npopulation: 1050000, 1000000, 700000, 525000, 280000, 70000\n\n# Completeness fractions\nC_d = 0.82\nC_p = 0.89\n\n# Infant and child mortality inputs\nB            = 78000     # live births in 2024\ndeaths_neo   = 1560      # deaths aged 0 to 28 days\ndeaths_inf   = 2496      # deaths aged 0 to 12 months\ndeaths_child = 1260      # deaths aged 1 to 4 years\nP_1_4        = 280000    # mid year population aged 1 to 4\n\n# Indirect standardisation inputs (same as Module 3 Slide 2)\nM_std       = c(0.4, 0.5, 1.2, 3.5, 17.0, 80.0)\nM_std_crude = 5.56</code>",
+    hint: "Make three vectors, bind them into a data frame, then sum(deaths) / sum(population) * 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group  &lt;- c(\"0-14\",\"15-29\",\"30-44\",\"45-59\",\"60-74\",\"75+\")\ndeaths     &lt;- c(630, 700, 1190, 3150, 7000, 8400)\npopulation &lt;- c(1050000, 1000000, 700000, 525000, 280000, 70000)\nbog &lt;- data.frame(age_group, deaths, population)\n\nC_d &lt;- 0.82; C_p &lt;- 0.89\nB &lt;- 78000; deaths_neo &lt;- 1560; deaths_inf &lt;- 2496\ndeaths_child &lt;- 1260; P_1_4 &lt;- 280000\nM_std &lt;- c(0.4, 0.5, 1.2, 3.5, 17.0, 80.0)\nM_std_crude &lt;- 5.56\n\nD &lt;- sum(bog$deaths)        # 21,070\nP &lt;- sum(bog$population)    # 3,625,000\n\nCDR &lt;- D / P * 1000\nround(CDR, 2)\n# 5.81</pre>"
+  },
+  {
+    title: "2. Correct the CDR for completeness",
+    diff: "easy",
+    prompt: "Using <code>C_d</code> and <code>C_p</code> from Exercise 1, compute the <strong>completeness corrected</strong> CDR. Round to two decimals.",
+    hint: "Either use the full formula or the shortcut CDR × C_p / C_d.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>CDR_corr &lt;- CDR * C_p / C_d\nround(CDR_corr, 2)\n# 6.31\n\n# Same answer, the long way:\nround((D / C_d) / (P / C_p) * 1000, 2)\n# 6.31</pre>"
+  },
+  {
+    title: "3. Compute Bogura NMR, IMR, and CMR",
+    diff: "easy",
+    prompt: "Using <code>B</code>, <code>deaths_neo</code>, <code>deaths_inf</code>, <code>deaths_child</code>, and <code>P_1_4</code> from Exercise 1, compute the <strong>Neonatal</strong>, <strong>Infant</strong>, and <strong>Child Mortality Rates</strong> for Bogura. Round each to two decimals. Compare them to Mymensingh's (NMR = 15.00, IMR = 24.00, CMR = 3.50) and write one sentence on what you see.",
+    hint: "NMR = deaths_neo / B * 1000. IMR = deaths_inf / B * 1000. CMR = deaths_child / P_1_4 * 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>NMR &lt;- deaths_neo  / B     * 1000\nIMR &lt;- deaths_inf  / B     * 1000\nCMR &lt;- deaths_child / P_1_4 * 1000\n\nround(c(NMR = NMR, IMR = IMR, CMR = CMR), 2)\n#   NMR    IMR    CMR\n# 20.00  32.00   4.50\n\n# All three are markedly higher in Bogura than in Mymensingh.\n# The Bogura infant and child mortality story is consistent\n# with the heavier age specific mortality we saw on the\n# Direct Standardisation slide.</pre>"
+  },
+  {
+    title: "4. Compute ASDR vector and plot the mortality curve",
+    diff: "easy",
+    prompt: "Add an <code>ASDR</code> column to <code>bog</code> (deaths / population × 1000), round and print, then draw a line plot of the Bogura mortality curve with age band labels on the x axis.",
+    hint: "Element wise division for the vector. plot(... type = \"o\", pch = 19, xaxt = \"n\"), then axis(1, at = 1:6, labels = bog$age_group).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>bog$ASDR &lt;- bog$deaths / bog$population * 1000\nround(bog[, c(\"age_group\",\"ASDR\")], 2)\n#   age_group   ASDR\n# 1      0-14   0.60\n# 2     15-29   0.70\n# 3     30-44   1.70\n# 4     45-59   6.00\n# 5     60-74  25.00\n# 6       75+ 120.00\n\nplot(bog$ASDR, type = \"o\", pch = 19, col = \"#dc2626\",\n     xaxt = \"n\", xlab = \"Age group\",\n     ylab = \"ASDR (per 1000)\",\n     main = \"Bogura 2024, Age Specific Mortality\")\naxis(1, at = 1:6, labels = bog$age_group)</pre>"
+  },
+  {
+    title: "5. Apply direct standardisation to Bogura",
+    diff: "med",
+    prompt: "Use the same reference standard population from Module 3 Slide 2 (<code>std_pop = c(28000, 25000, 20000, 15000, 8000, 4000)</code>) to compute the <strong>direct age standardised death rate</strong> for Bogura. Round to two decimals.",
+    hint: "ASR = sum(bog$ASDR * std_pop) / sum(std_pop).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>std_pop &lt;- c(28000, 25000, 20000, 15000, 8000, 4000)\n\nASR_bog &lt;- sum(bog$ASDR * std_pop) / sum(std_pop)\nround(ASR_bog, 2)\n# 8.38</pre>"
+  },
+  {
+    title: "6. Indirect standardisation for Bogura, with SMR",
+    diff: "med",
+    prompt: "Using <code>M_std</code> and <code>M_std_crude</code> from Exercise 1, compute Bogura's <strong>expected deaths</strong>, <strong>SMR</strong>, and the <strong>indirectly standardised rate</strong>. Round SMR to three decimals and the rate to two. Do the direct and indirect rates agree?",
+    hint: "expected = sum(M_std * bog$population) / 1000. SMR = D / expected. Indirect rate = SMR * M_std_crude.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>D_obs    &lt;- sum(bog$deaths)                       # 21,070\nexpected &lt;- sum(M_std * bog$population) / 1000    # 13,958\n\nSMR &lt;- D_obs / expected\nround(SMR, 3)\n# 1.510  (Bogura mortality is 51% above the standard's prediction)\n\nIDR &lt;- SMR * M_std_crude\nround(IDR, 2)\n# 8.40  (matches the direct standardised rate of 8.38)\n\n# Both methods give essentially the same conclusion.</pre>"
+  },
+  {
+    title: "7. One function for the full mortality report",
+    diff: "hard",
+    prompt: "Write an R function <code>mortality_report(deaths, population, C_d, C_p, std_pop, M_std, M_std_crude)</code> that returns a named numeric vector with: <code>CDR</code>, <code>CDR_corr</code>, <code>ASR_direct</code>, <code>SMR</code>, <code>ASR_indirect</code>. Test it on Bogura.",
+    hint: "Compute D, P, ASDR from the inputs. Then apply each formula in turn and return a named c().",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>mortality_report &lt;- function(deaths, population, C_d, C_p,\n                             std_pop, M_std, M_std_crude) {\n  D &lt;- sum(deaths)\n  P &lt;- sum(population)\n  CDR      &lt;- D / P * 1000\n  CDR_corr &lt;- CDR * C_p / C_d\n  ASDR     &lt;- deaths / population * 1000\n  ASR_dir  &lt;- sum(ASDR * std_pop) / sum(std_pop)\n  expected &lt;- sum(M_std * population) / 1000\n  SMR      &lt;- D / expected\n  ASR_ind  &lt;- SMR * M_std_crude\n  round(c(CDR          = CDR,\n          CDR_corr     = CDR_corr,\n          ASR_direct   = ASR_dir,\n          SMR          = SMR,\n          ASR_indirect = ASR_ind), 3)\n}\n\nmortality_report(\n  deaths     = bog$deaths,\n  population = bog$population,\n  C_d        = 0.82, C_p = 0.89,\n  std_pop    = std_pop,\n  M_std      = M_std,\n  M_std_crude = M_std_crude\n)\n#         CDR    CDR_corr  ASR_direct        SMR  ASR_indirect\n#       5.812      6.308       8.378      1.510         8.396</pre>"
+  }
+];
+
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <div class="exercise-head">
+      <h4>${ex.title}</h4>
+      <span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span>
+    </div>
+    <div class="exercise-prompt">${ex.prompt}</div>
+    <textarea placeholder="Write your R code here..." data-ex="${i}"></textarea>
+    <div class="exercise-actions">
+      <button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button>
+      <button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button>
+      <span class="save-indicator" data-ex="${i}"></span>
+    </div>
+    <div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div>
+    <div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>
+  `;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('quizStat').textContent = state.quizScore === null ? '—' : `${state.quizScore}/${quizData.length}`;
+  document.getElementById('flipStat').textContent = state.flashcardsFlipped.size;
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 3? Your slide position, quiz score, flashcards, and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+loadState();
+renderQuiz();
+restoreFlashcards();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 2: Fertility Measures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+.quiz-intro { background: white; padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.quiz-intro h2 { color: var(--primary-dark); margin-bottom: 8px; }
+.quiz-intro p { color: var(--muted); margin-bottom: 14px; }
+.quiz-question { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.quiz-question h4 { font-size: 16px; margin-bottom: 14px; color: var(--text); font-weight: 600; }
+.quiz-question .q-num { color: var(--primary); font-weight: 700; margin-right: 8px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { padding: 11px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: white; transition: all var(--transition); font-size: 14px; color: var(--text); text-align: left; font-family: inherit; }
+.quiz-option:hover { border-color: var(--primary); background: var(--primary-light); transform: translateX(2px); }
+.quiz-option.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 500; }
+.quiz-option.correct { border-color: var(--success); background: var(--success-light); color: var(--success); font-weight: 600; }
+.quiz-option.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+.quiz-option.disabled { pointer-events: none; }
+.quiz-explain { display: none; margin-top: 10px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid var(--primary); border-radius: 4px; font-size: 13px; color: #334155; }
+.quiz-explain.show { display: block; }
+.quiz-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); flex-wrap: wrap; }
+.quiz-progress-text { font-size: 13px; color: var(--muted); }
+.quiz-result { display: none; padding: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%); border-radius: var(--radius); text-align: center; margin-top: 16px; box-shadow: var(--shadow); animation: fadeIn 0.4s ease; }
+.quiz-result.show { display: block; }
+.quiz-result h3 { font-size: 24px; margin-bottom: 10px; color: var(--primary-dark); }
+.quiz-result .score { font-size: 48px; font-weight: 700; color: var(--primary); margin: 14px 0; line-height: 1; }
+.quiz-result .score .total { font-size: 26px; color: var(--muted); }
+.quiz-result p { color: #334155; margin-bottom: 16px; font-size: 15px; }
+.quiz-result .verdict { display: inline-block; padding: 6px 14px; border-radius: 16px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.quiz-result .verdict.great { background: var(--success-light); color: var(--success); }
+.quiz-result .verdict.good { background: var(--primary-light); color: var(--primary-dark); }
+.quiz-result .verdict.ok { background: var(--warning-light); color: var(--warning); }
+
+.flashcards-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.flashcards-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.flashcards-header p { color: var(--muted); font-size: 14px; }
+.flashcards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.flashcard { perspective: 1000px; height: 200px; cursor: pointer; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.55s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: var(--shadow); }
+.flashcard-front { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid var(--primary-light); color: var(--primary-dark); font-weight: 600; font-size: 17px; }
+.flashcard-front .hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 8px; font-style: italic; }
+.flashcard-back { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; transform: rotateY(180deg); font-size: 13px; line-height: 1.5; }
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.chart-svg { display: block; margin: 14px auto; max-width: 100%; height: auto; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ HEADER ============ -->
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 2</span>
+  <h1>Fertility Measures in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<!-- ============ STATS ============ -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="quizStat">—</div><div class="stat-label">Quiz Score</div></div>
+  <div class="stat"><div class="stat-value" id="flipStat">0</div><div class="stat-label">Cards Flipped</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<!-- ============ TABS ============ -->
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="quiz">📝 Quiz</button>
+  <button class="tab-btn" data-tab="flashcards">🃏 Flashcards</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+
+<!-- ============ SLIDES TAB ============ -->
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 9</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 2</h2>
+        <h3>What you will be able to compute by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li><strong>Crude Birth Rate</strong> and <strong>Monthly Birth Rate</strong>, the simplest period rates</li>
+          <li><strong>General Fertility Rate</strong>, refining the denominator to women of reproductive age</li>
+          <li><strong>Age Specific Fertility Rate</strong> across the seven 5 year bands, and plot the curve</li>
+          <li><strong>Total Fertility Rate</strong>, the headline single number for a population</li>
+          <li><strong>Gross Reproduction Rate</strong> and <strong>Net Reproduction Rate</strong>, the two female only versions of TFR</li>
+        </ul>
+        <p style="margin-top: 14px; color: var(--muted); font-size: 14px;">Each measure stacks on the previous one. By the time we reach NRR, you will have seen every component piece. When you are ready, click <strong>Next →</strong> to begin.</p>
+      </div>
+
+      <!-- SLIDE 2: Working dataset -->
+      <div class="slide" data-slide="2">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">Khulna District 2024, an illustrative fertility table with everything we need.</p>
+
+        <p>We will work with a single tidy table for <strong>Khulna District in 2024</strong>. Numbers are realistic for a mid sized Bangladesh district but are illustrative, not official figures. The dataset has seven rows, one per 5 year reproductive age band, and the columns we will use across the rest of the module.</p>
+
+        <h3>Create the data frame in R</h3>
+<pre><code><span class="r-cm"># Khulna District, mid year 2024 (illustrative figures)</span>
+age_group  <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-str">"15-19"</span>, <span class="r-str">"20-24"</span>, <span class="r-str">"25-29"</span>, <span class="r-str">"30-34"</span>,
+                 <span class="r-str">"35-39"</span>, <span class="r-str">"40-44"</span>, <span class="r-str">"45-49"</span>)
+
+births     <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">8000</span>, <span class="r-num">15000</span>, <span class="r-num">11000</span>, <span class="r-num">7000</span>,
+                 <span class="r-num">2200</span>, <span class="r-num">600</span>,   <span class="r-num">100</span>)
+
+female_pop <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">110000</span>, <span class="r-num">105000</span>, <span class="r-num">100000</span>, <span class="r-num">95000</span>,
+                 <span class="r-num">85000</span>,  <span class="r-num">75000</span>,  <span class="r-num">65000</span>)
+
+L5x        <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">494000</span>, <span class="r-num">491000</span>, <span class="r-num">488000</span>, <span class="r-num">484500</span>,
+                 <span class="r-num">480000</span>, <span class="r-num">474000</span>, <span class="r-num">466000</span>)  <span class="r-cm"># from a life table, radix 100,000</span>
+
+fert <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(age_group, births, female_pop, L5x)
+
+<span class="r-cm"># Two more constants we will use later</span>
+total_pop <span class="r-op">&lt;-</span> <span class="r-num">2400000</span>     <span class="r-cm"># Khulna mid year total population</span>
+p_female  <span class="r-op">&lt;-</span> <span class="r-num">0.487</span>        <span class="r-cm"># proportion of births that are girls (Bangladesh average)</span></code></pre>
+
+        <h3>What the data frame looks like</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>age_group</th><th class="num">births</th><th class="num">female_pop</th><th class="num">L5x</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>15-19</td><td class="num">8,000</td><td class="num">110,000</td><td class="num">494,000</td></tr>
+            <tr><td>20-24</td><td class="num">15,000</td><td class="num">105,000</td><td class="num">491,000</td></tr>
+            <tr><td>25-29</td><td class="num">11,000</td><td class="num">100,000</td><td class="num">488,000</td></tr>
+            <tr><td>30-34</td><td class="num">7,000</td><td class="num">95,000</td><td class="num">484,500</td></tr>
+            <tr><td>35-39</td><td class="num">2,200</td><td class="num">85,000</td><td class="num">480,000</td></tr>
+            <tr><td>40-44</td><td class="num">600</td><td class="num">75,000</td><td class="num">474,000</td></tr>
+            <tr><td>45-49</td><td class="num">100</td><td class="num">65,000</td><td class="num">466,000</td></tr>
+            <tr class="hl"><td><strong>Total</strong></td><td class="num"><strong>43,900</strong></td><td class="num"><strong>635,000</strong></td><td class="num">n/a</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>Three things to remember about this table.</strong> The <code>births</code> column is total live births in 2024 to women in that age band. The <code>female_pop</code> column is mid year female population in the band. The <code>L5x</code> column is person years lived in the band per <em>radix</em> of 100,000 from a life table; we will only need it on Slide 8 for the NRR.
+        </div>
+      </div>
+
+      <!-- SLIDE 3: CBR + MBR -->
+      <div class="slide" data-slide="3">
+        <h2>Crude Birth Rate and Monthly Birth Rate</h2>
+        <p>The two simplest period rates. Both put total live births over a total population, the only difference is whether the window is a year or a single month.</p>
+
+        <h3>Crude Birth Rate (CBR)</h3>
+        <div class="formula-box">
+          CBR &nbsp;=&nbsp; B &divide; P &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where B is total live births in the year and P is mid year total population.</p>
+
+<pre><code>B <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(fert<span class="r-op">$</span>births)            <span class="r-cm"># 43,900 total births in 2024</span>
+CBR <span class="r-op">&lt;-</span> B <span class="r-op">/</span> total_pop <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(CBR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 18.29</span></code></pre>
+
+        <p>So Khulna had about <strong>18.29</strong> live births per 1,000 people in 2024.</p>
+
+        <div class="warn-box">
+          <strong>Why "crude"?</strong> The denominator P includes men, children, and post menopausal women, none of whom can give birth. The numerator and denominator do not match well, so the rate is sensitive to the age and sex structure of the population. GFR (Slide 4) is the first fix.
+        </div>
+
+        <h3>Monthly Birth Rate (MBR), annualised</h3>
+        <p>If you only have one month of data, you scale it up by the days in a year to put it on the same footing as an annual rate.</p>
+
+        <div class="formula-box">
+          MBR &nbsp;=&nbsp; (365 &divide; d) &nbsp;&times;&nbsp; B<sub>month</sub> &divide; P<sub>month</sub> &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where d is the number of days in that month, B<sub>month</sub> the births during the month, and P<sub>month</sub> the population during the month.</p>
+
+<pre><code><span class="r-cm"># Khulna, March 2024: 31 days, 3,720 live births recorded</span>
+B_month <span class="r-op">&lt;-</span> <span class="r-num">3720</span>
+P_month <span class="r-op">&lt;-</span> <span class="r-num">2400000</span>
+d       <span class="r-op">&lt;-</span> <span class="r-num">31</span>
+
+MBR <span class="r-op">&lt;-</span> (<span class="r-num">365</span> <span class="r-op">/</span> d) <span class="r-op">*</span> B_month <span class="r-op">/</span> P_month <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(MBR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 18.25</span></code></pre>
+
+        <div class="example-box">
+          <strong>Sanity check:</strong> CBR ≈ 18.29 and MBR ≈ 18.25. They are close because the monthly count we used (3,720) is close to the yearly average per month (43,900 / 12 ≈ 3,658). If the monthly count had been seasonally high or low, the annualised MBR would have drifted away from the annual CBR.
+        </div>
+      </div>
+
+      <!-- SLIDE 4: GFR -->
+      <div class="slide" data-slide="4">
+        <h2>General Fertility Rate</h2>
+        <p>GFR fixes the denominator problem with CBR by restricting it to women of reproductive age, the 15 to 49 band.</p>
+
+        <div class="formula-box">
+          GFR &nbsp;=&nbsp; B &divide; P<sup>f</sup><sub>15 to 49</sub> &nbsp;&times;&nbsp; 1000
+        </div>
+        <p>where B is total live births in the year and P<sup>f</sup><sub>15 to 49</sub> is the mid year female population in the reproductive ages.</p>
+
+        <h3>Compute it in R</h3>
+<pre><code>Pf_15_49 <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(fert<span class="r-op">$</span>female_pop)   <span class="r-cm"># 635,000 women aged 15 to 49</span>
+GFR <span class="r-op">&lt;-</span> B <span class="r-op">/</span> Pf_15_49 <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(GFR, <span class="r-num">2</span>)
+<span class="r-cm">#&gt; [1] 69.13</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it:</strong> there were about <strong>69.13</strong> live births per 1,000 women aged 15 to 49 in Khulna in 2024. GFR is roughly 3.7 times CBR here, simply because the denominator shrank by about that factor.
+        </div>
+
+        <h3>The classic rule of thumb, GFR ≈ 4.5 × CBR</h3>
+        <p>Across many populations, the ratio GFR to CBR stays remarkably stable, close to 4.5. It is not exact, but it is a useful sanity check and a quick way to estimate one rate from the other when the data is partial.</p>
+
+        <div class="formula-box">
+          GFR &nbsp;&approx;&nbsp; 4.5 &nbsp;&times;&nbsp; CBR
+        </div>
+
+<pre><code><span class="r-cm"># Quick check on Khulna</span>
+<span class="r-num">4.5</span> <span class="r-op">*</span> CBR
+<span class="r-cm">#&gt; [1] 82.30</span>
+
+<span class="r-cm"># Actual GFR computed from the data</span>
+GFR
+<span class="r-cm">#&gt; [1] 69.13</span></code></pre>
+        <p>The approximation predicts 82.3, the actual GFR is 69.1. The rule of thumb is on the right order of magnitude; the gap here mostly reflects Khulna's particular age and sex composition.</p>
+
+        <div class="practice" data-q="s4">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">Without recomputing, what would happen to the GFR if we mistakenly used <em>total female population</em> (all ages) as the denominator instead of women aged 15 to 49?</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">It would stay the same</button>
+            <button class="practice-btn" data-correct="false">It would become larger</button>
+            <button class="practice-btn" data-correct="true">It would become smaller</button>
+            <button class="practice-btn" data-correct="false">It would become exactly the CBR</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: ASFR -->
+      <div class="slide" data-slide="5">
+        <h2>Age Specific Fertility Rate</h2>
+        <p>ASFR pushes the denominator one step further. For each 5 year band, we divide births to women in that band by the female population <em>in that band</em>. The result is a vector of seven rates that together describe the fertility profile of the population.</p>
+
+        <div class="formula-box">
+          ASFR<sub>a</sub> &nbsp;=&nbsp; B<sub>a</sub> &divide; P<sup>f</sup><sub>a</sub> &nbsp;&times;&nbsp; 1000
+        </div>
+
+        <h3>Compute the full ASFR vector</h3>
+<pre><code>fert<span class="r-op">$</span>ASFR <span class="r-op">&lt;-</span> fert<span class="r-op">$</span>births <span class="r-op">/</span> fert<span class="r-op">$</span>female_pop <span class="r-op">*</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(fert[, <span class="r-func">c</span>(<span class="r-str">"age_group"</span>, <span class="r-str">"ASFR"</span>)], <span class="r-num">2</span>)
+<span class="r-cm">#&gt;   age_group   ASFR</span>
+<span class="r-cm">#&gt; 1     15-19  72.73</span>
+<span class="r-cm">#&gt; 2     20-24 142.86</span>
+<span class="r-cm">#&gt; 3     25-29 110.00</span>
+<span class="r-cm">#&gt; 4     30-34  73.68</span>
+<span class="r-cm">#&gt; 5     35-39  25.88</span>
+<span class="r-cm">#&gt; 6     40-44   8.00</span>
+<span class="r-cm">#&gt; 7     45-49   1.54</span></code></pre>
+
+        <h3>Plot the ASFR curve</h3>
+<pre><code><span class="r-func">plot</span>(fert<span class="r-op">$</span>ASFR, type <span class="r-op">=</span> <span class="r-str">"o"</span>, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xaxt <span class="r-op">=</span> <span class="r-str">"n"</span>, xlab <span class="r-op">=</span> <span class="r-str">"Age group"</span>, ylab <span class="r-op">=</span> <span class="r-str">"ASFR (per 1000 women)"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Khulna 2024, Age Specific Fertility"</span>)
+<span class="r-func">axis</span>(<span class="r-num">1</span>, at <span class="r-op">=</span> <span class="r-num">1</span><span class="r-op">:</span><span class="r-num">7</span>, labels <span class="r-op">=</span> fert<span class="r-op">$</span>age_group)</code></pre>
+
+        <h3>What the curve looks like</h3>
+        <svg class="chart-svg" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ASFR curve for Khulna 2024">
+          <style>
+            .ax { stroke: #475569; stroke-width: 1; }
+            .gr { stroke: #e2e8f0; stroke-width: 1; }
+            .lbl { font: 11px Inter, sans-serif; fill: #475569; }
+            .ttl { font: bold 14px Inter, sans-serif; fill: #1e293b; }
+            .axl { font: 11px Inter, sans-serif; fill: #64748b; }
+            .pt { fill: #2563eb; }
+            .ln { stroke: #2563eb; stroke-width: 2; fill: none; }
+            .vl { font: 11px Inter, sans-serif; fill: #1e293b; font-weight: 600; }
+          </style>
+          <text x="320" y="18" text-anchor="middle" class="ttl">Khulna 2024, Age Specific Fertility</text>
+
+          <!-- Grid lines -->
+          <line x1="80" y1="40" x2="610" y2="40" class="gr"/>
+          <line x1="80" y1="85" x2="610" y2="85" class="gr"/>
+          <line x1="80" y1="130" x2="610" y2="130" class="gr"/>
+          <line x1="80" y1="175" x2="610" y2="175" class="gr"/>
+          <line x1="80" y1="220" x2="610" y2="220" class="gr"/>
+          <line x1="80" y1="265" x2="610" y2="265" class="gr"/>
+
+          <!-- Y axis -->
+          <line x1="80" y1="40" x2="80" y2="310" class="ax"/>
+          <text x="72" y="44" text-anchor="end" class="axl">150</text>
+          <text x="72" y="89" text-anchor="end" class="axl">125</text>
+          <text x="72" y="134" text-anchor="end" class="axl">100</text>
+          <text x="72" y="179" text-anchor="end" class="axl">75</text>
+          <text x="72" y="224" text-anchor="end" class="axl">50</text>
+          <text x="72" y="269" text-anchor="end" class="axl">25</text>
+          <text x="72" y="314" text-anchor="end" class="axl">0</text>
+          <text x="36" y="170" text-anchor="middle" class="axl" transform="rotate(-90 36 170)">ASFR (per 1000)</text>
+
+          <!-- X axis -->
+          <line x1="80" y1="310" x2="610" y2="310" class="ax"/>
+          <text x="115" y="328" text-anchor="middle" class="axl">15-19</text>
+          <text x="200" y="328" text-anchor="middle" class="axl">20-24</text>
+          <text x="285" y="328" text-anchor="middle" class="axl">25-29</text>
+          <text x="370" y="328" text-anchor="middle" class="axl">30-34</text>
+          <text x="455" y="328" text-anchor="middle" class="axl">35-39</text>
+          <text x="540" y="328" text-anchor="middle" class="axl">40-44</text>
+          <text x="600" y="328" text-anchor="middle" class="axl">45-49</text>
+          <text x="345" y="348" text-anchor="middle" class="axl">Age group</text>
+
+          <!-- Polyline through the 7 ASFR points -->
+          <polyline class="ln"
+            points="115,179 200,53 285,112 370,177 455,263 540,296 600,307"/>
+
+          <!-- Points + value labels -->
+          <circle cx="115" cy="179" r="5" class="pt"/>
+          <text x="115" y="170" text-anchor="middle" class="vl">72.7</text>
+
+          <circle cx="200" cy="53" r="5" class="pt"/>
+          <text x="200" y="44" text-anchor="middle" class="vl">142.9</text>
+
+          <circle cx="285" cy="112" r="5" class="pt"/>
+          <text x="285" y="103" text-anchor="middle" class="vl">110.0</text>
+
+          <circle cx="370" cy="177" r="5" class="pt"/>
+          <text x="370" y="168" text-anchor="middle" class="vl">73.7</text>
+
+          <circle cx="455" cy="263" r="5" class="pt"/>
+          <text x="455" y="254" text-anchor="middle" class="vl">25.9</text>
+
+          <circle cx="540" cy="296" r="5" class="pt"/>
+          <text x="540" y="287" text-anchor="middle" class="vl">8.0</text>
+
+          <circle cx="600" cy="307" r="5" class="pt"/>
+          <text x="600" y="298" text-anchor="middle" class="vl">1.5</text>
+        </svg>
+
+        <div class="example-box">
+          <strong>The classic fertility curve.</strong> Rates rise from age 15, peak between 20 and 29, then fall sharply. In Bangladesh the peak typically sits at 20 to 24, the modal childbearing age. ASFR is the building block for every measure on the next four slides.
+        </div>
+      </div>
+
+      <!-- SLIDE 6: TFR -->
+      <div class="slide" data-slide="6">
+        <h2>Total Fertility Rate</h2>
+        <p>TFR sums the ASFRs across all reproductive ages to give the average number of children a woman would have over her lifetime if she experienced the current age specific rates throughout her reproductive years.</p>
+
+        <div class="formula-box">
+          TFR &nbsp;=&nbsp; n &nbsp;&times;&nbsp; &Sigma; ASFR<sub>a</sub> &divide; 1000
+        </div>
+        <p>where n is the width of each age band (5 here, for 5 year groups).</p>
+
+        <h3>Compute it in R</h3>
+<pre><code>n <span class="r-op">&lt;-</span> <span class="r-num">5</span>                                  <span class="r-cm"># age band width</span>
+TFR <span class="r-op">&lt;-</span> n <span class="r-op">*</span> <span class="r-func">sum</span>(fert<span class="r-op">$</span>ASFR) <span class="r-op">/</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(TFR, <span class="r-num">3</span>)
+<span class="r-cm">#&gt; [1] 2.173</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it:</strong> a TFR of <strong>2.173</strong> means a woman in Khulna, if she lived through her whole reproductive life experiencing 2024 age specific rates, would have about 2.17 live births on average. The widely cited <em>replacement level</em> TFR is around 2.10, so Khulna sits just above replacement.
+        </div>
+
+        <div class="tip-box">
+          <strong>Why we multiply by n.</strong> ASFR is births per 1,000 woman years. Each age band lasts n years, so a woman spends n woman years in it. Multiplying by n converts the per year rate into a per band count, and the sum across bands is a per lifetime count.
+        </div>
+      </div>
+
+      <!-- SLIDE 7: GRR -->
+      <div class="slide" data-slide="7">
+        <h2>Gross Reproduction Rate</h2>
+        <p>TFR counts all live births. GRR keeps only the female births, because only daughters can themselves go on to reproduce. It is the natural female only version of TFR.</p>
+
+        <div class="formula-box">
+          GRR &nbsp;=&nbsp; TFR &nbsp;&times;&nbsp; p
+        </div>
+        <p>where p is the proportion of live births that are girls. In Bangladesh this is around <strong>0.487</strong>, slightly under half because slightly more boys are born than girls.</p>
+
+        <h3>Compute it in R</h3>
+<pre><code>GRR <span class="r-op">&lt;-</span> TFR <span class="r-op">*</span> p_female
+<span class="r-func">round</span>(GRR, <span class="r-num">3</span>)
+<span class="r-cm">#&gt; [1] 1.058</span></code></pre>
+
+        <h3>Equivalent formulation, straight from ASFR</h3>
+<pre><code>GRR2 <span class="r-op">&lt;-</span> n <span class="r-op">*</span> <span class="r-func">sum</span>(fert<span class="r-op">$</span>ASFR <span class="r-op">*</span> p_female) <span class="r-op">/</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(GRR2, <span class="r-num">3</span>)
+<span class="r-cm">#&gt; [1] 1.058</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it:</strong> a GRR of <strong>1.058</strong> means each Khulna woman would, on average, give birth to about 1.06 daughters over her reproductive lifetime, assuming no daughter ever dies before reaching the end of her own reproductive period.
+        </div>
+
+        <div class="warn-box">
+          <strong>Why GRR is always less than TFR.</strong> GRR = TFR × p with p &lt; 1. The daughter only filter chops off the male births. GRR is always smaller than TFR, by a factor equal to the proportion of female births.
+        </div>
+      </div>
+
+      <!-- SLIDE 8: NRR -->
+      <div class="slide" data-slide="8">
+        <h2>Net Reproduction Rate</h2>
+        <p>GRR assumed every newborn daughter survives the full reproductive period. NRR drops that assumption by weighting each age band by the chance a woman is still alive in it, taken from a life table.</p>
+
+        <div class="formula-box">
+          NRR &nbsp;=&nbsp; &Sigma; ASFR<sub>a</sub> &nbsp;&times;&nbsp; p &nbsp;&times;&nbsp; (<sub>5</sub>L<sub>x,a</sub> &divide; l<sub>0</sub>) &divide; 1000
+        </div>
+        <p>where <sub>5</sub>L<sub>x,a</sub> is person years lived in age band a per radix l<sub>0</sub>, taken from a female life table. We will build life tables properly in Module 4; for now treat the <code>L5x</code> column as given.</p>
+
+        <h3>Compute it in R</h3>
+<pre><code>l0 <span class="r-op">&lt;-</span> <span class="r-num">100000</span>                                <span class="r-cm"># life table radix</span>
+
+NRR <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(fert<span class="r-op">$</span>ASFR <span class="r-op">*</span> p_female <span class="r-op">*</span> fert<span class="r-op">$</span>L5x <span class="r-op">/</span> l0) <span class="r-op">/</span> <span class="r-num">1000</span>
+<span class="r-func">round</span>(NRR, <span class="r-num">3</span>)
+<span class="r-cm">#&gt; [1] 1.034</span></code></pre>
+
+        <h3>Compare the three female only measures</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Measure</th><th>Formula</th><th class="num">Khulna 2024</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>TFR</td><td>n × Σ ASFR / 1000</td><td class="num">2.173</td></tr>
+            <tr><td>GRR</td><td>TFR × p</td><td class="num">1.058</td></tr>
+            <tr class="hl"><td><strong>NRR</strong></td><td>Σ ASFR × p × <sub>5</sub>L<sub>x</sub>/l<sub>0</sub> / 1000</td><td class="num"><strong>1.034</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>How to read NRR = 1.034:</strong> on current age specific fertility and mortality, each woman in Khulna is replaced, in the next generation, by about 1.03 surviving daughters. Values above 1 indicate a population that is still slowly growing through natural increase. Below 1 indicates eventual decline.
+        </div>
+
+        <div class="practice" data-q="s8">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">In a hypothetical population with zero mortality throughout the reproductive ages, what is the relationship between NRR and GRR?</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">NRR is always larger than GRR</button>
+            <button class="practice-btn" data-correct="true">NRR equals GRR</button>
+            <button class="practice-btn" data-correct="false">NRR is always 1 by definition</button>
+            <button class="practice-btn" data-correct="false">NRR is undefined without mortality</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: Recap -->
+      <div class="slide" data-slide="9">
+        <h2>Recap</h2>
+        <p class="slide-subtitle">Seven fertility measures, each one extending the previous one.</p>
+
+        <h3>The recipe card</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Measure</th><th>Formula</th><th>R recipe</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CBR</td><td>B / P × 1000</td><td><code>sum(fert$births) / total_pop * 1000</code></td></tr>
+            <tr><td>MBR</td><td>(365 / d) × B<sub>m</sub> / P<sub>m</sub> × 1000</td><td><code>(365 / d) * B_month / P_month * 1000</code></td></tr>
+            <tr><td>GFR</td><td>B / P<sup>f</sup><sub>15-49</sub> × 1000</td><td><code>sum(fert$births) / sum(fert$female_pop) * 1000</code></td></tr>
+            <tr><td>ASFR<sub>a</sub></td><td>B<sub>a</sub> / P<sup>f</sup><sub>a</sub> × 1000</td><td><code>fert$births / fert$female_pop * 1000</code></td></tr>
+            <tr><td>TFR</td><td>n × Σ ASFR / 1000</td><td><code>5 * sum(fert$ASFR) / 1000</code></td></tr>
+            <tr><td>GRR</td><td>TFR × p</td><td><code>TFR * p_female</code></td></tr>
+            <tr><td>NRR</td><td>Σ ASFR × p × <sub>5</sub>L<sub>x</sub>/l<sub>0</sub> / 1000</td><td><code>sum(fert$ASFR * p_female * fert$L5x / l0) / 1000</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Before next class</h3>
+        <ol>
+          <li>Take the <strong>Quiz</strong> to nail down formulas and denominators.</li>
+          <li>Flip the <strong>Flashcards</strong> until the seven names and definitions feel automatic.</li>
+          <li>Solve at least 4 of the 7 <strong>Exercises</strong> on the Rajshahi District dataset.</li>
+        </ol>
+
+        <div class="example-box">
+          <strong>Next module (Module 3):</strong> we move from births to deaths. Crude Death Rate, Age Specific Death Rate, completeness of registration correction, and direct standardisation in R.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ TAB ============ -->
+<section id="quiz" class="tab-content">
+  <div class="quiz-intro">
+    <h2>📝 Quiz Time</h2>
+    <p>10 questions on the seven fertility measures and the R code that computes them.</p>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="quiz-footer">
+    <span class="quiz-progress-text" id="quizProgText">0 of 10 answered</span>
+    <button class="btn btn-primary" id="submitQuiz" disabled>Submit Answers</button>
+  </div>
+
+  <div class="quiz-result" id="quizResult">
+    <div class="verdict" id="quizVerdict">Great work!</div>
+    <h3>Your Score</h3>
+    <div class="score"><span id="scoreNum">0</span><span class="total">/10</span></div>
+    <p id="quizMessage">You have completed the Module 2 quiz.</p>
+    <button class="btn btn-ghost" id="retakeQuiz">↺ Retake Quiz</button>
+  </div>
+</section>
+
+<!-- ============ FLASHCARDS TAB ============ -->
+<section id="flashcards" class="tab-content">
+  <div class="flashcards-header">
+    <h2>🃏 Key Terms, Flashcards</h2>
+    <p>Click any card to flip it and see the definition.</p>
+  </div>
+  <div class="flashcards-grid" id="flashcardsGrid"></div>
+</section>
+
+<!-- ============ EXERCISES TAB ============ -->
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Rajshahi District 2024 (illustrative)</h2>
+    <p>All exercises use a second district so you apply the same recipes on fresh numbers. The dataset is given at the top of the prompt for Exercise 1. Reuse it for the rest.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 2">↺ Reset Progress</button>
+
+<script>
+/* ================================================================
+   MODULE 2, FERTILITY MEASURES IN R
+   ================================================================ */
+
+const STORAGE_KEY = 'statcomp1-module2-progress-v1';
+
+const state = {
+  currentSlide: 1,
+  totalSlides: 9,
+  maxSlideReached: 1,
+  quizAnswers: {},
+  quizScore: null,
+  quizSubmitted: false,
+  flashcardsFlipped: new Set(),
+  exercisesOpened: new Set(),
+  exerciseAnswers: {},
+  practiceAnswers: {}
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      flashcardsFlipped: [...state.flashcardsFlipped],
+      exercisesOpened: [...state.exercisesOpened]
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => {
+  if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1);
+});
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct
+        ? '✓ Correct!'
+        : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const quizData = [
+  {
+    q: "What does the Crude Birth Rate measure?",
+    options: [
+      "Live births per woman of reproductive age",
+      "Live births per 1,000 mid year total population",
+      "Live births per 1,000 women aged 15 to 49",
+      "Annual percentage growth of the population"
+    ],
+    answer: 1,
+    explain: "CBR = B / P × 1000. Births in the numerator, total mid year population in the denominator, expressed per 1,000."
+  },
+  {
+    q: "Why is the CBR called crude?",
+    options: [
+      "It excludes stillbirths",
+      "Its denominator includes people who cannot give birth (men, children, post menopausal women)",
+      "It is calculated without survey weights",
+      "It uses calendar year rather than fiscal year"
+    ],
+    answer: 1,
+    explain: "The denominator mixes people who are not at risk of childbearing. GFR fixes this by restricting to women aged 15 to 49."
+  },
+  {
+    q: "Which denominator does the General Fertility Rate use?",
+    options: [
+      "Total population",
+      "Total female population",
+      "Females aged 15 to 49",
+      "Females aged 20 to 39"
+    ],
+    answer: 2,
+    explain: "GFR = B / P^f(15 to 49) × 1000. Reproductive age women only."
+  },
+  {
+    q: "ASFR for ages 25 to 29 is defined as:",
+    options: [
+      "The probability a 25 year old woman gives birth this year",
+      "Live births to women aged 25 to 29 divided by women aged 25 to 29, per 1,000",
+      "Total births aged 25 to 29 divided by total population",
+      "Mean age at first birth"
+    ],
+    answer: 1,
+    explain: "ASFR_a = B_a / P^f_a × 1000. Each age band has its own rate, computed from band specific births and band specific women."
+  },
+  {
+    q: "With 5 year age bands and ASFR expressed per 1,000 women, the TFR per woman equals:",
+    options: [
+      "sum(ASFR) / 1000",
+      "5 × sum(ASFR) / 1000",
+      "sum(ASFR × 5)",
+      "mean(ASFR)"
+    ],
+    answer: 1,
+    explain: "Multiply the per year rate by the width of each band (n = 5), sum across bands, then divide by 1000 to go from per 1,000 women to per woman."
+  },
+  {
+    q: "A TFR of 2.10 is usually described as:",
+    options: [
+      "Well above replacement",
+      "Replacement level",
+      "Far below replacement",
+      "Cannot tell without GRR"
+    ],
+    answer: 1,
+    explain: "Replacement level TFR is roughly 2.10. Each woman replaces herself and her partner, plus a small allowance for daughters who do not survive to reproductive age."
+  },
+  {
+    q: "GRR equals:",
+    options: [
+      "TFR + proportion of female births",
+      "TFR × proportion of female births",
+      "TFR / proportion of female births",
+      "NRR + life expectancy"
+    ],
+    answer: 1,
+    explain: "GRR keeps only the female part of TFR, so multiply by p (the proportion of births that are girls)."
+  },
+  {
+    q: "NRR is always:",
+    options: [
+      "Greater than GRR",
+      "Equal to GRR",
+      "Less than or equal to GRR",
+      "Equal to TFR"
+    ],
+    answer: 2,
+    explain: "NRR weights GRR by survival probabilities (5Lx / l0), which are at most 1. Mortality during the reproductive ages can only reduce GRR, never increase it."
+  },
+  {
+    q: "Given vectors asfr and female_pop in R, what does sum(asfr * female_pop / 1000) compute?",
+    options: [
+      "The total live births",
+      "TFR per woman",
+      "GFR per 1,000 women",
+      "Mean ASFR"
+    ],
+    answer: 0,
+    explain: "ASFR × P^f / 1000 returns the births in each band (B_a). Summing across bands returns the total B for the year."
+  },
+  {
+    q: "If a district has CBR = 18 and GFR = 78, which statement is correct?",
+    options: [
+      "GFR is always smaller than CBR",
+      "GFR must equal CBR / proportion of women 15 to 49",
+      "GFR is much larger than CBR because its denominator is restricted to women 15 to 49",
+      "GFR cannot exceed 50"
+    ],
+    answer: 2,
+    explain: "GFR has a smaller denominator (women 15 to 49 only), so it will typically be several times larger than CBR for the same B."
+  }
+];
+
+const quizContainer = document.getElementById('quizContainer');
+function renderQuiz() {
+  quizContainer.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `
+      <h4><span class="q-num">Q${i + 1}.</span>${q.q}</h4>
+      <div class="quiz-options" data-qi="${i}">
+        ${q.options.map((opt, j) => `<button class="quiz-option" data-choice="${j}">${opt}</button>`).join('')}
+      </div>
+      <div class="quiz-explain"><strong>Explanation:</strong> ${q.explain}</div>
+    `;
+    quizContainer.appendChild(div);
+  });
+  bindQuiz();
+  restoreQuizState();
+}
+function bindQuiz() {
+  quizContainer.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.quizSubmitted) return;
+      const parent = btn.parentElement;
+      const qi = +parent.dataset.qi;
+      parent.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.quizAnswers[qi] = +btn.dataset.choice;
+      updateQuizProgress();
+      saveState();
+    });
+  });
+}
+function updateQuizProgress() {
+  const answered = Object.keys(state.quizAnswers).length;
+  document.getElementById('quizProgText').textContent = `${answered} of ${quizData.length} answered`;
+  document.getElementById('submitQuiz').disabled = answered !== quizData.length || state.quizSubmitted;
+}
+function restoreQuizState() {
+  Object.entries(state.quizAnswers).forEach(([qi, choice]) => {
+    const opts = quizContainer.querySelector(`[data-qi="${qi}"]`);
+    if (!opts) return;
+    const btn = opts.querySelector(`[data-choice="${choice}"]`);
+    if (btn) btn.classList.add('selected');
+  });
+  if (state.quizSubmitted) revealQuizResults();
+  updateQuizProgress();
+}
+function revealQuizResults() {
+  let score = 0;
+  quizData.forEach((q, i) => {
+    const opts = quizContainer.querySelector(`[data-qi="${i}"]`);
+    if (!opts) return;
+    const chosen = state.quizAnswers[i];
+    opts.querySelectorAll('.quiz-option').forEach(b => {
+      b.classList.add('disabled');
+      const c = +b.dataset.choice;
+      if (c === q.answer) b.classList.add('correct');
+      else if (c === chosen) b.classList.add('wrong');
+    });
+    opts.parentElement.querySelector('.quiz-explain').classList.add('show');
+    if (chosen === q.answer) score++;
+  });
+  state.quizScore = score;
+  document.getElementById('scoreNum').textContent = score;
+  const msg = document.getElementById('quizMessage');
+  const verdict = document.getElementById('quizVerdict');
+  const pct = score / quizData.length;
+  if (pct >= 0.85) {
+    verdict.className = 'verdict great';
+    verdict.textContent = '🏆 Excellent!';
+    msg.textContent = "Fertility measures are in your R toolkit. Move on to the exercises.";
+  } else if (pct >= 0.6) {
+    verdict.className = 'verdict good';
+    verdict.textContent = '👍 Good work';
+    msg.textContent = "Solid. Review the wrong ones and try again if you'd like.";
+  } else {
+    verdict.className = 'verdict ok';
+    verdict.textContent = 'Keep going 💪';
+    msg.textContent = "Review the slides and flashcards, then retake.";
+  }
+  document.getElementById('quizResult').classList.add('show');
+  document.getElementById('submitQuiz').disabled = true;
+}
+document.getElementById('submitQuiz').addEventListener('click', () => {
+  state.quizSubmitted = true;
+  revealQuizResults();
+  updateStats();
+  saveState();
+});
+document.getElementById('retakeQuiz').addEventListener('click', () => {
+  state.quizAnswers = {};
+  state.quizScore = null;
+  state.quizSubmitted = false;
+  document.getElementById('quizResult').classList.remove('show');
+  renderQuiz();
+  updateQuizProgress();
+  updateStats();
+  saveState();
+});
+
+const flashcards = [
+  { term: "Crude Birth Rate (CBR)", def: "CBR = B / P × 1000. Live births per 1,000 mid year population. Crude because the denominator includes people who cannot give birth." },
+  { term: "Monthly Birth Rate (MBR)", def: "MBR = (365 / d) × B_month / P_month × 1000. Births in a single month, scaled up to an annual rate by the days in year over days in that month." },
+  { term: "General Fertility Rate (GFR)", def: "GFR = B / P^f(15 to 49) × 1000. Live births per 1,000 women in the reproductive age range. Smaller denominator than CBR." },
+  { term: "Age Specific Fertility Rate (ASFR)", def: "ASFR_a = B_a / P^f_a × 1000 for each age band a. The vector of seven values is the fertility profile of the population." },
+  { term: "Total Fertility Rate (TFR)", def: "TFR = n × Σ ASFR / 1000 with n = 5 for 5 year bands. The expected lifetime births per woman if she lived through current age specific rates." },
+  { term: "Gross Reproduction Rate (GRR)", def: "GRR = TFR × p where p is the proportion of female births. The female only version of TFR, ignoring mortality." },
+  { term: "Net Reproduction Rate (NRR)", def: "NRR = Σ ASFR × p × (5Lx / l0) / 1000. GRR adjusted for female mortality during the reproductive years. NRR ≤ GRR always." },
+  { term: "Proportion of female births (p)", def: "Fraction of live births that are girls, typically around 0.487 in Bangladesh. Used to convert TFR into GRR and GRR into NRR." },
+  { term: "Why CBR is crude", def: "The denominator includes men, children, and post menopausal women, none of whom contribute to the numerator. Sensitive to age and sex structure." },
+  { term: "Mid year population", def: "Estimated population on or near July 1 of the year. The standard denominator for all period rates including CBR, GFR, and ASFR." },
+  { term: "Reproductive age range", def: "Ages 15 to 49 in standard demographic practice. The denominator for GFR and the union of age bands for ASFR, TFR, GRR, NRR." },
+  { term: "Life table 5Lx", def: "Person years lived in age band a per radix l0, from a female life table. Used as a survival weight inside the NRR calculation." },
+  { term: "Replacement level TFR", def: "Roughly 2.10 children per woman. The level at which each generation just replaces itself, allowing for some daughter mortality before reproduction." },
+  { term: "Births from ASFR", def: "Multiplying ASFR by female_pop and dividing by 1000 returns band level births. sum(asfr * female_pop / 1000) recovers total B." }
+];
+const fcGrid = document.getElementById('flashcardsGrid');
+flashcards.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'flashcard';
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="flashcard-inner">
+      <div class="flashcard-front">
+        ${c.term}
+        <span class="hint">click to flip</span>
+      </div>
+      <div class="flashcard-back">${c.def}</div>
+    </div>
+  `;
+  card.addEventListener('click', () => {
+    card.classList.toggle('flipped');
+    if (card.classList.contains('flipped')) state.flashcardsFlipped.add(i);
+    updateStats();
+    saveState();
+  });
+  fcGrid.appendChild(card);
+});
+function restoreFlashcards() {
+  fcGrid.querySelectorAll('.flashcard').forEach(c => {
+    if (state.flashcardsFlipped.has(+c.dataset.idx)) c.classList.add('flipped');
+  });
+}
+
+const exercises = [
+  {
+    title: "1. Build the Rajshahi data frame, then compute CBR",
+    diff: "easy",
+    prompt: "The block below gives the Rajshahi District 2024 fertility table (illustrative). Type it into R as a data frame called <code>raj</code>, then compute the <strong>Crude Birth Rate</strong> using the given total mid year population of 2,700,000. Round to two decimals.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>age_group:  15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49\nbirths:     7500, 15000, 11000, 6300, 1900, 510, 75\nfemale_pop: 125000, 115000, 110000, 105000, 95000, 85000, 75000\nL5x:        494000, 491000, 488000, 484500, 480000, 474000, 466000</code>",
+    hint: "Make four vectors with c(), bind them into a data frame, sum the births column, then divide by total_pop and multiply by 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group  &lt;- c(\"15-19\",\"20-24\",\"25-29\",\"30-34\",\"35-39\",\"40-44\",\"45-49\")\nbirths     &lt;- c(7500, 15000, 11000, 6300, 1900, 510, 75)\nfemale_pop &lt;- c(125000, 115000, 110000, 105000, 95000, 85000, 75000)\nL5x        &lt;- c(494000, 491000, 488000, 484500, 480000, 474000, 466000)\nraj &lt;- data.frame(age_group, births, female_pop, L5x)\n\ntotal_pop &lt;- 2700000\nB &lt;- sum(raj$births)            # 42,285\n\nCBR &lt;- B / total_pop * 1000\nround(CBR, 2)\n# 15.66</pre>"
+  },
+  {
+    title: "2. Annualised Monthly Birth Rate for March 2024",
+    diff: "easy",
+    prompt: "In Rajshahi, March 2024 (31 days) recorded 3,580 live births. The mid month population was 2,700,000. Compute the annualised Monthly Birth Rate and compare to the CBR from Exercise 1.",
+    hint: "MBR = (365 / d) * B_month / P_month * 1000 with d = 31.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>B_month &lt;- 3580\nP_month &lt;- 2700000\nd       &lt;- 31\n\nMBR &lt;- (365 / d) * B_month / P_month * 1000\nround(MBR, 2)\n# 15.61\n\n# CBR was 15.66, so March is right at the yearly average pace,\n# only a touch below.</pre>"
+  },
+  {
+    title: "3. GFR for Rajshahi",
+    diff: "easy",
+    prompt: "Using <code>raj</code> from Exercise 1, compute the <strong>General Fertility Rate</strong>. Round to two decimals and write one sentence interpreting it.",
+    hint: "GFR = sum(raj$births) / sum(raj$female_pop) * 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>B        &lt;- sum(raj$births)        # 42,285\nPf_15_49 &lt;- sum(raj$female_pop)    # 710,000\n\nGFR &lt;- B / Pf_15_49 * 1000\nround(GFR, 2)\n# 59.56\n\n# About 59.56 live births per 1,000 women aged 15 to 49 in Rajshahi 2024.\n# Lower than Khulna's 69.13, pointing to a slightly lower fertility regime.</pre>"
+  },
+  {
+    title: "4. Full ASFR vector for Rajshahi, plus a line plot",
+    diff: "med",
+    prompt: "Compute the full ASFR vector for Rajshahi, add it as a new column <code>ASFR</code> on <code>raj</code>, and draw a line plot of ASFR against age group.",
+    hint: "Vectorised division: raj$births / raj$female_pop * 1000. For the plot, use plot(... type = \"o\") and override the x axis with axis(1, at = 1:7, labels = raj$age_group).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>raj$ASFR &lt;- raj$births / raj$female_pop * 1000\nround(raj[, c(\"age_group\",\"ASFR\")], 2)\n#   age_group   ASFR\n# 1     15-19  60.00\n# 2     20-24 130.43\n# 3     25-29 100.00\n# 4     30-34  60.00\n# 5     35-39  20.00\n# 6     40-44   6.00\n# 7     45-49   1.00\n\nplot(raj$ASFR, type = \"o\", pch = 19, col = \"#2563eb\",\n     xaxt = \"n\", xlab = \"Age group\",\n     ylab = \"ASFR (per 1000 women)\",\n     main = \"Rajshahi 2024, Age Specific Fertility\")\naxis(1, at = 1:7, labels = raj$age_group)</pre>"
+  },
+  {
+    title: "5. TFR for Rajshahi",
+    diff: "med",
+    prompt: "From the ASFR column computed in Exercise 4, compute the <strong>Total Fertility Rate</strong> per woman for Rajshahi. Round to three decimals. Is the district above or below replacement level?",
+    hint: "TFR = 5 * sum(raj$ASFR) / 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>n &lt;- 5\nTFR &lt;- n * sum(raj$ASFR) / 1000\nround(TFR, 3)\n# 1.887\n\n# Below the rough replacement level of 2.10.\n# Each Rajshahi woman has on average about 1.89 children.</pre>"
+  },
+  {
+    title: "6. GRR at two different p values",
+    diff: "med",
+    prompt: "Compute the <strong>Gross Reproduction Rate</strong> for Rajshahi at the Bangladesh average <code>p_female = 0.487</code>, and again at <code>p_female = 0.485</code>. Round both to three decimals and explain in one line how the change in p affects GRR.",
+    hint: "GRR = TFR * p_female. Recompute with each value of p.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>TFR &lt;- 5 * sum(raj$ASFR) / 1000\n\nGRR_487 &lt;- TFR * 0.487\nGRR_485 &lt;- TFR * 0.485\n\nround(c(p_0.487 = GRR_487, p_0.485 = GRR_485), 3)\n# p_0.487 p_0.485\n#   0.919   0.915\n\n# GRR scales linearly with p. A slightly smaller p (fewer daughters\n# per 100 births) gives a slightly smaller GRR.</pre>"
+  },
+  {
+    title: "7. NRR for Rajshahi, using L5x from the life table",
+    diff: "hard",
+    prompt: "Using the <code>L5x</code> column already on <code>raj</code> (radix l0 = 100,000), compute the <strong>Net Reproduction Rate</strong> at <code>p_female = 0.487</code>. Round to three decimals. Then write one sentence explaining why NRR comes out below GRR.",
+    hint: "NRR = sum(raj$ASFR * p_female * raj$L5x / l0) / 1000.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>p_female &lt;- 0.487\nl0       &lt;- 100000\n\nNRR &lt;- sum(raj$ASFR * p_female * raj$L5x / l0) / 1000\nround(NRR, 3)\n# 0.897\n\n# GRR was 0.919. NRR is smaller because each age band is\n# weighted by 5Lx / l0, the average woman years lived per\n# radix, which is always less than the full band width n = 5\n# whenever any mortality exists. Mortality erodes the\n# reproductive contribution slightly at each age.</pre>"
+  }
+];
+
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <div class="exercise-head">
+      <h4>${ex.title}</h4>
+      <span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span>
+    </div>
+    <div class="exercise-prompt">${ex.prompt}</div>
+    <textarea placeholder="Write your R code here..." data-ex="${i}"></textarea>
+    <div class="exercise-actions">
+      <button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button>
+      <button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button>
+      <span class="save-indicator" data-ex="${i}"></span>
+    </div>
+    <div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div>
+    <div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>
+  `;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('quizStat').textContent = state.quizScore === null ? '—' : `${state.quizScore}/${quizData.length}`;
+  document.getElementById('flipStat').textContent = state.flashcardsFlipped.size;
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 2? Your slide position, quiz score, flashcards, and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+loadState();
+renderQuiz();
+restoreFlashcards();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R Programming Reference for AST 232</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #faf5ff; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #7c3aed; --primary-dark: #6d28d9; --primary-light: #ede9fe;
+  --accent: #6d28d9; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2;
+  --info: #2563eb; --info-light: #dbeafe;
+  --border: #ddd6fe; --border-soft: #ede9fe;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.doc-header { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.doc-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.doc-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.doc-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.doc-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.doc-header p.subtitle { font-size: 15px; opacity: 0.92; max-width: 720px; position: relative; z-index: 1; }
+header.doc-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.doc-header p.instructor strong { font-weight: 700; }
+
+.toc { background: white; padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 22px; border-left: 4px solid var(--primary); }
+.toc h3 { color: var(--primary-dark); font-size: 15px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.toc-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 20px; margin: 0; }
+.toc-list li { margin: 0; }
+.toc-list a { color: var(--primary); text-decoration: none; font-size: 14px; display: block; padding: 4px 0; transition: color var(--transition); }
+.toc-list a:hover { color: var(--primary-dark); text-decoration: underline; }
+.toc-list a::before { content: "§ "; color: var(--muted); font-weight: 700; margin-right: 4px; }
+
+.section { background: white; padding: 26px 28px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; scroll-margin-top: 20px; }
+.section h2 { color: var(--primary-dark); font-size: 22px; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--border-soft); display: flex; align-items: baseline; gap: 10px; }
+.section h2 .num { color: var(--primary); font-size: 15px; font-weight: 600; background: var(--primary-light); padding: 3px 10px; border-radius: 8px; }
+.section h3 { color: var(--text); font-size: 17px; font-weight: 600; margin: 20px 0 8px; }
+.section p { color: #334155; margin-bottom: 12px; }
+.section ul, .section ol { margin: 0 0 14px 22px; }
+.section li { margin-bottom: 6px; color: #334155; }
+
+.example-box { background: var(--info-light); border-left: 4px solid var(--info); padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.example-box strong { color: var(--info); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: #fef3c7; border-left: 4px solid #d97706; padding: 14px 18px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 14px; }
+.warn-box strong { color: #b45309; }
+
+code { background: #ede9fe; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #6d28d9; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border-soft); background: white; font-size: 13.5px; vertical-align: top; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #faf5ff; }
+table.data-table code { background: #ede9fe; font-size: 12.5px; }
+
+.back-top { position: fixed; bottom: 18px; right: 18px; background: var(--primary); border: none; color: white; padding: 10px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; box-shadow: var(--shadow-lg); font-family: inherit; font-weight: 500; transition: all var(--transition); z-index: 100; text-decoration: none; }
+.back-top:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.doc-header { padding: 22px 18px; }
+  header.doc-header h1 { font-size: 22px; }
+  .section { padding: 20px 18px; }
+  .toc-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="top">
+
+<header class="doc-header">
+  <span class="badge">ISRT • AST 232 • Reference</span>
+  <h1>R Programming Reference for AST 232</h1>
+  <p class="subtitle">A take home reference for the R you will need across this course. You already have a dedicated R programming course, so nothing here is taught in class. Flip to the relevant section whenever you get stuck during a lab or exam.</p>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul class="toc-list">
+    <li><a href="#setup">1. R and RStudio setup</a></li>
+    <li><a href="#basics">2. Basic syntax and assignment</a></li>
+    <li><a href="#types">3. Data types</a></li>
+    <li><a href="#vectors">4. Vectors</a></li>
+    <li><a href="#dataframes">5. Data frames</a></li>
+    <li><a href="#subsetting">6. Subsetting: [ ], [[ ]], $</a></li>
+    <li><a href="#io">7. Reading and writing data</a></li>
+    <li><a href="#control">8. Control flow: if, for, while</a></li>
+    <li><a href="#functions">9. Writing your own functions</a></li>
+    <li><a href="#apply">10. The apply family</a></li>
+    <li><a href="#stats">11. Common statistical functions</a></li>
+    <li><a href="#dists">12. Distribution functions</a></li>
+    <li><a href="#formulas">13. Formulas and aov()</a></li>
+    <li><a href="#plots">14. Plotting basics</a></li>
+    <li><a href="#pitfalls">15. Common pitfalls</a></li>
+  </ul>
+</div>
+
+<div class="section" id="setup">
+  <h2><span class="num">§ 1</span>R and RStudio Setup</h2>
+  <p>Install <strong>R</strong> from <code>cran.r-project.org</code> (the actual language) and <strong>RStudio Desktop</strong> from <code>posit.co</code> (a friendly editor around it). Open RStudio; the console at the bottom is where you type commands.</p>
+
+  <h3>Working directory</h3>
+  <p>R has a "current folder" it reads from and writes to. Check and change it with:</p>
+<pre><code><span class="r-func">getwd</span>()                              <span class="r-cm"># where am I?</span>
+<span class="r-func">setwd</span>(<span class="r-str">"/Users/you/Desktop/ast232"</span>)   <span class="r-cm"># go there (macOS / Linux)</span>
+<span class="r-func">setwd</span>(<span class="r-str">"C:/Users/you/Desktop/ast232"</span>)  <span class="r-cm"># go there (Windows)</span></code></pre>
+
+  <div class="tip-box">
+    <strong>Best practice.</strong> Create one folder per lab or per exam, save your <code>.R</code> or <code>.Rmd</code> file there, then use <strong>Session → Set Working Directory → To Source File Location</strong>. All your paths become simple: <code>read.csv("data.csv")</code> just works.
+  </div>
+</div>
+
+<div class="section" id="basics">
+  <h2><span class="num">§ 2</span>Basic Syntax and Assignment</h2>
+
+  <table class="data-table">
+    <thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>#</code></td><td>Comment, everything after # is ignored</td><td><code># this is a note</code></td></tr>
+      <tr><td><code>&lt;-</code></td><td>Assignment (preferred in R)</td><td><code>x &lt;- 5</code></td></tr>
+      <tr><td><code>=</code></td><td>Also assignment, plus used for function arguments</td><td><code>mean(x, na.rm = TRUE)</code></td></tr>
+      <tr><td><code>+ - * /</code></td><td>Arithmetic</td><td><code>3 + 4 * 2</code></td></tr>
+      <tr><td><code>^</code></td><td>Exponent</td><td><code>2 ^ 10</code> gives 1024</td></tr>
+      <tr><td><code>%%</code></td><td>Modulo (remainder)</td><td><code>17 %% 5</code> gives 2</td></tr>
+      <tr><td><code>%/%</code></td><td>Integer division</td><td><code>17 %/% 5</code> gives 3</td></tr>
+    </tbody>
+  </table>
+
+<pre><code>x <span class="r-op">&lt;-</span> <span class="r-num">5</span>                <span class="r-cm"># store 5 in x</span>
+y <span class="r-op">&lt;-</span> <span class="r-num">3</span>                <span class="r-cm"># store 3 in y</span>
+x <span class="r-op">+</span> y              <span class="r-cm"># prints 8 to the console</span>
+z <span class="r-op">&lt;-</span> x <span class="r-op">+</span> y          <span class="r-cm"># store 8 in z, print nothing</span>
+<span class="r-func">print</span>(z)           <span class="r-cm"># prints 8 explicitly</span></code></pre>
+</div>
+
+<div class="section" id="types">
+  <h2><span class="num">§ 3</span>Data Types</h2>
+
+  <table class="data-table">
+    <thead><tr><th>Type</th><th>Example</th><th>Check with</th></tr></thead>
+    <tbody>
+      <tr><td>numeric (double)</td><td><code>3.14</code>, <code>0.005</code></td><td><code>is.numeric(x)</code></td></tr>
+      <tr><td>integer</td><td><code>5L</code>, <code>100L</code></td><td><code>is.integer(x)</code></td></tr>
+      <tr><td>character</td><td><code>"male"</code>, <code>"V1"</code></td><td><code>is.character(x)</code></td></tr>
+      <tr><td>logical</td><td><code>TRUE</code>, <code>FALSE</code></td><td><code>is.logical(x)</code></td></tr>
+      <tr><td>factor</td><td><code>factor(c("A","B","A"))</code></td><td><code>is.factor(x)</code></td></tr>
+      <tr><td>missing</td><td><code>NA</code>, <code>NA_real_</code>, <code>NA_integer_</code></td><td><code>is.na(x)</code></td></tr>
+      <tr><td>null</td><td><code>NULL</code></td><td><code>is.null(x)</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Factors are important in ANOVA</h3>
+  <p>ANOVA treats a factor differently from a plain number. Always convert treatment / block / group columns to factors before <code>aov()</code>:</p>
+<pre><code>treat <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-str">"V1"</span>, <span class="r-str">"V2"</span>, <span class="r-str">"V3"</span>, <span class="r-str">"V1"</span>, <span class="r-str">"V2"</span>, <span class="r-str">"V3"</span>)
+treat <span class="r-op">&lt;-</span> <span class="r-func">factor</span>(treat)
+<span class="r-func">levels</span>(treat)   <span class="r-cm"># "V1" "V2" "V3"</span></code></pre>
+
+  <div class="warn-box">
+    <strong>NA and comparisons.</strong> Anything compared with NA returns NA, not TRUE or FALSE. Use <code>is.na(x)</code> to test for missing values, not <code>x == NA</code>.
+  </div>
+</div>
+
+<div class="section" id="vectors">
+  <h2><span class="num">§ 4</span>Vectors</h2>
+  <p>The vector is the fundamental R object. Even a single number is a vector of length 1.</p>
+
+  <h3>Creating vectors</h3>
+<pre><code>x <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">2</span>, <span class="r-num">3</span>, <span class="r-num">4</span>, <span class="r-num">5</span>)              <span class="r-cm"># combine</span>
+y <span class="r-op">&lt;-</span> <span class="r-num">1</span><span class="r-op">:</span><span class="r-num">10</span>                          <span class="r-cm"># sequence 1 to 10</span>
+z <span class="r-op">&lt;-</span> <span class="r-func">seq</span>(<span class="r-num">0</span>, <span class="r-num">1</span>, by <span class="r-op">=</span> <span class="r-num">0.1</span>)             <span class="r-cm"># 0.0, 0.1, ..., 1.0</span>
+w <span class="r-op">&lt;-</span> <span class="r-func">seq</span>(<span class="r-num">0</span>, <span class="r-num">100</span>, length.out <span class="r-op">=</span> <span class="r-num">11</span>)   <span class="r-cm"># 0, 10, 20, ..., 100</span>
+r <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-str">"A"</span>, times <span class="r-op">=</span> <span class="r-num">5</span>)             <span class="r-cm"># "A" "A" "A" "A" "A"</span>
+g <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-func">c</span>(<span class="r-str">"V1"</span>, <span class="r-str">"V2"</span>, <span class="r-str">"V3"</span>), each <span class="r-op">=</span> <span class="r-num">4</span>)   <span class="r-cm"># V1 V1 V1 V1 V2 V2 ... V3 V3</span>
+h <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-num">1</span><span class="r-op">:</span><span class="r-num">4</span>, times <span class="r-op">=</span> <span class="r-num">3</span>)          <span class="r-cm"># 1 2 3 4 1 2 3 4 1 2 3 4</span></code></pre>
+
+  <h3>Vector arithmetic is element wise</h3>
+<pre><code>a <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">2</span>, <span class="r-num">3</span>)
+b <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">10</span>, <span class="r-num">20</span>, <span class="r-num">30</span>)
+a <span class="r-op">+</span> b       <span class="r-cm"># 11 22 33</span>
+a <span class="r-op">*</span> <span class="r-num">2</span>       <span class="r-cm"># 2  4  6   (scalar broadcasts)</span>
+<span class="r-func">sqrt</span>(a)     <span class="r-cm"># 1.000 1.414 1.732</span></code></pre>
+
+  <h3>Handy summary functions</h3>
+<pre><code><span class="r-func">length</span>(x)    <span class="r-cm"># number of elements</span>
+<span class="r-func">sum</span>(x)       <span class="r-cm"># total</span>
+<span class="r-func">mean</span>(x)      <span class="r-cm"># mean</span>
+<span class="r-func">min</span>(x); <span class="r-func">max</span>(x)
+<span class="r-func">range</span>(x)     <span class="r-cm"># c(min, max)</span>
+<span class="r-func">sort</span>(x)      <span class="r-cm"># sorted vector</span>
+<span class="r-func">rev</span>(x)       <span class="r-cm"># reverse</span>
+<span class="r-func">cumsum</span>(x)    <span class="r-cm"># cumulative sums, used in Life Table Tx</span>
+<span class="r-func">cumprod</span>(x)   <span class="r-cm"># cumulative products, used in Life Table lx</span></code></pre>
+</div>
+
+<div class="section" id="dataframes">
+  <h2><span class="num">§ 5</span>Data Frames</h2>
+  <p>A data frame is a rectangular table where each column can be a different type. It is the R equivalent of a spreadsheet.</p>
+
+<pre><code><span class="r-cm"># Build one from vectors</span>
+age    <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">18</span>, <span class="r-num">22</span>, <span class="r-num">30</span>, <span class="r-num">45</span>)
+gender <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-str">"F"</span>, <span class="r-str">"M"</span>, <span class="r-str">"F"</span>, <span class="r-str">"M"</span>)
+height <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">160</span>, <span class="r-num">175</span>, <span class="r-num">162</span>, <span class="r-num">180</span>)
+
+df <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(age, gender <span class="r-op">=</span> <span class="r-func">factor</span>(gender), height)
+df
+<span class="r-cm">#   age gender height</span>
+<span class="r-cm"># 1  18      F    160</span>
+<span class="r-cm"># 2  22      M    175</span>
+<span class="r-cm"># 3  30      F    162</span>
+<span class="r-cm"># 4  45      M    180</span></code></pre>
+
+  <h3>Exploring a new data frame</h3>
+<pre><code><span class="r-func">head</span>(df, n <span class="r-op">=</span> <span class="r-num">6</span>)    <span class="r-cm"># first 6 rows</span>
+<span class="r-func">tail</span>(df, n <span class="r-op">=</span> <span class="r-num">6</span>)    <span class="r-cm"># last 6 rows</span>
+<span class="r-func">str</span>(df)            <span class="r-cm"># structure: types and first values</span>
+<span class="r-func">summary</span>(df)        <span class="r-cm"># quick summary per column</span>
+<span class="r-func">names</span>(df)          <span class="r-cm"># column names</span>
+<span class="r-func">nrow</span>(df); <span class="r-func">ncol</span>(df)
+<span class="r-func">dim</span>(df)            <span class="r-cm"># c(nrow, ncol)</span></code></pre>
+
+  <h3>Adding a computed column</h3>
+<pre><code>df<span class="r-op">$</span>bmi <span class="r-op">&lt;-</span> <span class="r-num">70</span> <span class="r-op">/</span> (df<span class="r-op">$</span>height <span class="r-op">/</span> <span class="r-num">100</span>)<span class="r-op">^</span><span class="r-num">2</span>    <span class="r-cm"># assume weight 70 kg</span></code></pre>
+</div>
+
+<div class="section" id="subsetting">
+  <h2><span class="num">§ 6</span>Subsetting: <code>[ ]</code>, <code>[[ ]]</code>, <code>$</code></h2>
+
+  <h3>Vector subsetting</h3>
+<pre><code>x <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">10</span>, <span class="r-num">20</span>, <span class="r-num">30</span>, <span class="r-num">40</span>, <span class="r-num">50</span>)
+
+x[<span class="r-num">3</span>]              <span class="r-cm"># 30 (third element)</span>
+x[<span class="r-num">2</span><span class="r-op">:</span><span class="r-num">4</span>]            <span class="r-cm"># 20 30 40</span>
+x[<span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">3</span>, <span class="r-num">5</span>)]      <span class="r-cm"># 10 30 50 (integer index)</span>
+x[<span class="r-op">-</span><span class="r-num">1</span>]             <span class="r-cm"># drop the first element</span>
+x[x <span class="r-op">&gt;</span> <span class="r-num">25</span>]          <span class="r-cm"># 30 40 50 (logical index)</span></code></pre>
+
+  <h3>Data frame subsetting</h3>
+<pre><code>df[<span class="r-num">1</span>, ]              <span class="r-cm"># first row, all columns</span>
+df[, <span class="r-num">2</span>]              <span class="r-cm"># second column, all rows (returns vector)</span>
+df[, <span class="r-str">"gender"</span>]       <span class="r-cm"># same, by name</span>
+df<span class="r-op">$</span>gender           <span class="r-cm"># same, dollar shortcut</span>
+
+df[df<span class="r-op">$</span>age <span class="r-op">&gt;</span> <span class="r-num">25</span>, ]     <span class="r-cm"># all rows where age > 25</span>
+df[df<span class="r-op">$</span>gender <span class="r-op">==</span> <span class="r-str">"F"</span>, <span class="r-func">c</span>(<span class="r-str">"age"</span>, <span class="r-str">"height"</span>)]   <span class="r-cm"># female rows, two columns</span></code></pre>
+
+  <h3><code>[ ]</code> vs <code>[[ ]]</code> in a nutshell</h3>
+  <ul>
+    <li><code>x[1]</code> returns a subset of the same type. On a data frame it returns a data frame.</li>
+    <li><code>x[[1]]</code> extracts the element itself. On a data frame it returns the column as a vector.</li>
+    <li><code>x$name</code> is a shortcut for <code>x[["name"]]</code>. Works on data frames and lists.</li>
+  </ul>
+</div>
+
+<div class="section" id="io">
+  <h2><span class="num">§ 7</span>Reading and Writing Data</h2>
+
+  <h3>CSV files</h3>
+<pre><code><span class="r-cm"># Read</span>
+dat <span class="r-op">&lt;-</span> <span class="r-func">read.csv</span>(<span class="r-str">"my_data.csv"</span>)
+dat <span class="r-op">&lt;-</span> <span class="r-func">read.csv</span>(<span class="r-str">"my_data.csv"</span>, header <span class="r-op">=</span> <span class="r-kw">TRUE</span>,
+                stringsAsFactors <span class="r-op">=</span> <span class="r-kw">FALSE</span>)
+
+<span class="r-cm"># Write</span>
+<span class="r-func">write.csv</span>(dat, <span class="r-str">"output.csv"</span>, row.names <span class="r-op">=</span> <span class="r-kw">FALSE</span>)</code></pre>
+
+  <h3>Excel files</h3>
+<pre><code><span class="r-func">install.packages</span>(<span class="r-str">"readxl"</span>)           <span class="r-cm"># once</span>
+<span class="r-func">library</span>(readxl)
+
+dat <span class="r-op">&lt;-</span> <span class="r-func">read_excel</span>(<span class="r-str">"my_data.xlsx"</span>)
+dat <span class="r-op">&lt;-</span> <span class="r-func">read_excel</span>(<span class="r-str">"my_data.xlsx"</span>, sheet <span class="r-op">=</span> <span class="r-str">"Sheet2"</span>)</code></pre>
+
+  <h3>R's native format (.RData / .rds)</h3>
+<pre><code><span class="r-cm"># .RData: save multiple objects together</span>
+<span class="r-func">save</span>(dat, model, file <span class="r-op">=</span> <span class="r-str">"analysis.RData"</span>)
+<span class="r-func">load</span>(<span class="r-str">"analysis.RData"</span>)    <span class="r-cm"># restores dat, model into workspace</span>
+
+<span class="r-cm"># .rds: one object at a time, cleaner</span>
+<span class="r-func">saveRDS</span>(model, <span class="r-str">"model.rds"</span>)
+model <span class="r-op">&lt;-</span> <span class="r-func">readRDS</span>(<span class="r-str">"model.rds"</span>)</code></pre>
+</div>
+
+<div class="section" id="control">
+  <h2><span class="num">§ 8</span>Control Flow: <code>if</code>, <code>for</code>, <code>while</code></h2>
+
+  <h3>if / else</h3>
+<pre><code>x <span class="r-op">&lt;-</span> <span class="r-num">10</span>
+<span class="r-kw">if</span> (x <span class="r-op">&gt;</span> <span class="r-num">5</span>) {
+  <span class="r-func">print</span>(<span class="r-str">"big"</span>)
+} <span class="r-kw">else</span> <span class="r-kw">if</span> (x <span class="r-op">==</span> <span class="r-num">5</span>) {
+  <span class="r-func">print</span>(<span class="r-str">"exactly five"</span>)
+} <span class="r-kw">else</span> {
+  <span class="r-func">print</span>(<span class="r-str">"small"</span>)
+}</code></pre>
+
+  <h3>Vectorised alternative: <code>ifelse()</code></h3>
+<pre><code>x <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">2</span>, <span class="r-num">7</span>, <span class="r-num">4</span>, <span class="r-num">9</span>)
+<span class="r-func">ifelse</span>(x <span class="r-op">&gt;</span> <span class="r-num">5</span>, <span class="r-str">"big"</span>, <span class="r-str">"small"</span>)
+<span class="r-cm"># "small" "big"   "small" "big"</span></code></pre>
+
+  <h3>for loop</h3>
+<pre><code><span class="r-kw">for</span> (i <span class="r-kw">in</span> <span class="r-num">1</span><span class="r-op">:</span><span class="r-num">5</span>) {
+  <span class="r-func">print</span>(i<span class="r-op">^</span><span class="r-num">2</span>)
+}
+
+<span class="r-cm"># Fill a vector inside a loop (pre allocate)</span>
+result <span class="r-op">&lt;-</span> <span class="r-func">numeric</span>(<span class="r-num">10</span>)
+<span class="r-kw">for</span> (i <span class="r-kw">in</span> <span class="r-num">1</span><span class="r-op">:</span><span class="r-num">10</span>) {
+  result[i] <span class="r-op">&lt;-</span> i<span class="r-op">^</span><span class="r-num">2</span>
+}</code></pre>
+
+  <h3>while loop</h3>
+<pre><code>i <span class="r-op">&lt;-</span> <span class="r-num">1</span>
+<span class="r-kw">while</span> (i <span class="r-op">&lt;=</span> <span class="r-num">5</span>) {
+  <span class="r-func">print</span>(i)
+  i <span class="r-op">&lt;-</span> i <span class="r-op">+</span> <span class="r-num">1</span>
+}</code></pre>
+
+  <div class="tip-box">
+    <strong>Prefer vectorised code over loops.</strong> R is designed for vectors. Writing <code>x * 2</code> is faster and clearer than looping over each element and multiplying. Reach for a loop only when you cannot express the task vectorised.
+  </div>
+</div>
+
+<div class="section" id="functions">
+  <h2><span class="num">§ 9</span>Writing Your Own Functions</h2>
+  <p>The syntax is <code>function_name &lt;- function(arg1, arg2, ...) { ... body ... }</code>. The last expression evaluated is the return value (you can also use <code>return()</code>).</p>
+
+<pre><code><span class="r-cm"># A tiny function</span>
+square <span class="r-op">&lt;-</span> <span class="r-kw">function</span>(x) {
+  x <span class="r-op">^</span> <span class="r-num">2</span>
+}
+<span class="r-func">square</span>(<span class="r-num">7</span>)   <span class="r-cm"># 49</span>
+
+<span class="r-cm"># Default arguments</span>
+mean_or_median <span class="r-op">&lt;-</span> <span class="r-kw">function</span>(x, use_median <span class="r-op">=</span> <span class="r-kw">FALSE</span>) {
+  <span class="r-kw">if</span> (use_median) <span class="r-func">median</span>(x) <span class="r-kw">else</span> <span class="r-func">mean</span>(x)
+}
+
+<span class="r-cm"># A function that returns multiple values via a named list</span>
+summary_stats <span class="r-op">&lt;-</span> <span class="r-kw">function</span>(x) {
+  <span class="r-func">list</span>(
+    n       <span class="r-op">=</span> <span class="r-func">length</span>(x),
+    mean    <span class="r-op">=</span> <span class="r-func">mean</span>(x),
+    sd      <span class="r-op">=</span> <span class="r-func">sd</span>(x),
+    range   <span class="r-op">=</span> <span class="r-func">range</span>(x)
+  )
+}
+<span class="r-func">summary_stats</span>(<span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">4</span>, <span class="r-num">5</span>, <span class="r-num">6</span>, <span class="r-num">8</span>))</code></pre>
+
+  <div class="example-box">
+    <strong>You wrote functions like these on the labs.</strong> <code>build_life_table()</code> in Module 4 and <code>mortality_report()</code> in Module 3 are both custom functions that bundle a workflow into one reusable name.
+  </div>
+</div>
+
+<div class="section" id="apply">
+  <h2><span class="num">§ 10</span>The Apply Family</h2>
+  <p>These functions apply another function across the elements of a vector, list, or margin of a matrix / data frame. They replace many for loops.</p>
+
+  <table class="data-table">
+    <thead><tr><th>Function</th><th>Applies to</th><th>Returns</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>apply(mat, MARGIN, FUN)</code></td><td>Matrix or data frame</td><td>Vector or matrix</td><td><code>apply(m, 1, sum)</code> row sums</td></tr>
+      <tr><td><code>sapply(x, FUN)</code></td><td>Vector or list</td><td>Simplified vector / matrix</td><td><code>sapply(1:5, function(i) i^2)</code></td></tr>
+      <tr><td><code>lapply(x, FUN)</code></td><td>Vector or list</td><td>List (always)</td><td><code>lapply(mylist, mean)</code></td></tr>
+      <tr><td><code>tapply(x, group, FUN)</code></td><td>Vector split by group</td><td>Named vector / array</td><td><code>tapply(yield, treat, mean)</code></td></tr>
+      <tr><td><code>mapply(FUN, x, y, ...)</code></td><td>Multiple vectors in parallel</td><td>Vector</td><td><code>mapply(sum, 1:3, 4:6)</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="example-box">
+    <strong>tapply is the workhorse of Block 2.</strong> Any time you want a group mean, group sum, or group count, <code>tapply(y, group, FUN)</code> is the natural R idiom. It appears in every CRD, RCBD, and LSD analysis.
+  </div>
+</div>
+
+<div class="section" id="stats">
+  <h2><span class="num">§ 11</span>Common Statistical Functions</h2>
+
+  <table class="data-table">
+    <thead><tr><th>Function</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>mean(x)</code></td><td>Arithmetic mean</td></tr>
+      <tr><td><code>median(x)</code></td><td>Median</td></tr>
+      <tr><td><code>var(x)</code></td><td>Sample variance (divides by n − 1)</td></tr>
+      <tr><td><code>sd(x)</code></td><td>Sample standard deviation</td></tr>
+      <tr><td><code>quantile(x, probs)</code></td><td>Quantiles at the given probabilities</td></tr>
+      <tr><td><code>IQR(x)</code></td><td>Interquartile range Q3 − Q1</td></tr>
+      <tr><td><code>cor(x, y)</code></td><td>Pearson correlation</td></tr>
+      <tr><td><code>cov(x, y)</code></td><td>Covariance</td></tr>
+      <tr><td><code>summary(x)</code></td><td>Five number summary plus mean</td></tr>
+      <tr><td><code>table(x)</code></td><td>Frequency table</td></tr>
+      <tr><td><code>prop.table(table(x))</code></td><td>Proportions instead of counts</td></tr>
+      <tr><td><code>na.rm = TRUE</code></td><td>Argument to skip NA values, e.g. <code>mean(x, na.rm = TRUE)</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section" id="dists">
+  <h2><span class="num">§ 12</span>Distribution Functions</h2>
+  <p>Every standard distribution comes with four functions, prefixed <code>d</code> (density), <code>p</code> (cumulative), <code>q</code> (quantile / inverse cumulative), and <code>r</code> (random draws).</p>
+
+  <table class="data-table">
+    <thead><tr><th>Distribution</th><th>d / p / q / r</th><th>What you use it for</th></tr></thead>
+    <tbody>
+      <tr><td>Normal(&mu;, &sigma;)</td><td><code>dnorm, pnorm, qnorm, rnorm</code></td><td>Z tests, confidence intervals</td></tr>
+      <tr><td>Student t</td><td><code>dt, pt, qt, rt</code></td><td>t tests, one at a time CIs</td></tr>
+      <tr><td>F(df1, df2)</td><td><code>df, pf, qf, rf</code></td><td>ANOVA F tests</td></tr>
+      <tr><td>Chi squared(df)</td><td><code>dchisq, pchisq, qchisq, rchisq</code></td><td>Goodness of fit, variance CIs</td></tr>
+      <tr><td>Binomial(n, p)</td><td><code>dbinom, pbinom, qbinom, rbinom</code></td><td>Yes / no counts</td></tr>
+      <tr><td>Poisson(&lambda;)</td><td><code>dpois, ppois, qpois, rpois</code></td><td>Event counts (birth or death counts in demography)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>How the four flavours differ</h3>
+<pre><code><span class="r-func">dnorm</span>(<span class="r-num">1.96</span>)              <span class="r-cm"># density (height of the curve) at x = 1.96</span>
+<span class="r-func">pnorm</span>(<span class="r-num">1.96</span>)              <span class="r-cm"># P(Z &lt;= 1.96) = 0.975</span>
+<span class="r-func">qnorm</span>(<span class="r-num">0.975</span>)             <span class="r-cm"># quantile: value with P below it of 0.975 = 1.96</span>
+<span class="r-func">rnorm</span>(<span class="r-num">5</span>, mean <span class="r-op">=</span> <span class="r-num">0</span>, sd <span class="r-op">=</span> <span class="r-num">1</span>) <span class="r-cm"># 5 random draws</span></code></pre>
+
+  <div class="example-box">
+    <strong>How Block 2 uses this.</strong> The critical F value in an ANOVA is <code>qf(0.95, df_treat, df_error)</code>. A one at a time CI in Module 5 uses <code>qt(0.975, df_error)</code>. Bonferroni CIs replace <code>0.975</code> with <code>1 − &alpha; / (2r)</code>.
+  </div>
+</div>
+
+<div class="section" id="formulas">
+  <h2><span class="num">§ 13</span>Formulas and <code>aov()</code></h2>
+  <p>A formula in R uses <code>~</code> to separate the response (left) from the predictors (right).</p>
+
+  <table class="data-table">
+    <thead><tr><th>Formula</th><th>Meaning</th><th>Design</th></tr></thead>
+    <tbody>
+      <tr><td><code>y ~ treat</code></td><td>Response depends on one factor</td><td>CRD</td></tr>
+      <tr><td><code>y ~ treat + block</code></td><td>Response depends on treatment and block (main effects)</td><td>RCBD</td></tr>
+      <tr><td><code>y ~ treat + row + column</code></td><td>Three main effects</td><td>Latin Square</td></tr>
+      <tr><td><code>y ~ treat * block</code></td><td>Main effects plus interaction (equivalent to <code>treat + block + treat:block</code>)</td><td>Factorial (not covered)</td></tr>
+      <tr><td><code>y ~ .</code></td><td>Response against every other column in the data</td><td>Regression shortcut</td></tr>
+    </tbody>
+  </table>
+
+<pre><code>model <span class="r-op">&lt;-</span> <span class="r-func">aov</span>(yield <span class="r-op">~</span> treat <span class="r-op">+</span> block, data <span class="r-op">=</span> df)
+<span class="r-func">summary</span>(model)               <span class="r-cm"># ANOVA table with F and p</span>
+<span class="r-func">residuals</span>(model)             <span class="r-cm"># residuals for diagnostics</span>
+<span class="r-func">fitted</span>(model)                <span class="r-cm"># fitted values</span>
+<span class="r-func">coef</span>(model)                  <span class="r-cm"># coefficients (contrast form)</span>
+<span class="r-func">TukeyHSD</span>(model, <span class="r-str">"treat"</span>)     <span class="r-cm"># pairwise comparison, family wise controlled</span></code></pre>
+</div>
+
+<div class="section" id="plots">
+  <h2><span class="num">§ 14</span>Plotting Basics</h2>
+
+  <h3>Base R plotting functions used in this course</h3>
+  <table class="data-table">
+    <thead><tr><th>Function</th><th>What it draws</th><th>Where it appears</th></tr></thead>
+    <tbody>
+      <tr><td><code>plot(x, y)</code></td><td>Scatter or line plot</td><td>ASFR and ASDR curves, ex curve</td></tr>
+      <tr><td><code>boxplot(y ~ x)</code></td><td>Boxplot by group</td><td>CRD, RCBD visualisation</td></tr>
+      <tr><td><code>hist(x)</code></td><td>Histogram</td><td>Residual distribution check</td></tr>
+      <tr><td><code>barplot(x)</code></td><td>Bar chart, accepts negatives</td><td>Population pyramid</td></tr>
+      <tr><td><code>qqnorm(x); qqline(x)</code></td><td>Normal QQ plot</td><td>Normality check in ANOVA</td></tr>
+      <tr><td><code>interaction.plot()</code></td><td>Mean of y by two factors</td><td>RCBD dye trial exercise</td></tr>
+      <tr><td><code>plot(model)</code></td><td>Four diagnostic panels</td><td>Shortcut for CRD / RCBD checks</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Common styling arguments</h3>
+<pre><code><span class="r-func">plot</span>(x, y,
+     type <span class="r-op">=</span> <span class="r-str">"o"</span>,           <span class="r-cm"># "p" points, "l" lines, "b" both, "o" over-plotted</span>
+     pch  <span class="r-op">=</span> <span class="r-num">19</span>,            <span class="r-cm"># point shape (19 = filled circle)</span>
+     col  <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,     <span class="r-cm"># colour (name, hex, or rgb)</span>
+     lwd  <span class="r-op">=</span> <span class="r-num">2</span>,             <span class="r-cm"># line width</span>
+     xlab <span class="r-op">=</span> <span class="r-str">"Age group"</span>,   <span class="r-cm"># axis labels</span>
+     ylab <span class="r-op">=</span> <span class="r-str">"Rate"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"My plot"</span>,     <span class="r-cm"># title</span>
+     xlim <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-num">0</span>, <span class="r-num">50</span>),      <span class="r-cm"># axis range</span>
+     ylim <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-num">0</span>, <span class="r-num">100</span>))
+<span class="r-func">points</span>(x, y2, col <span class="r-op">=</span> <span class="r-str">"red"</span>)     <span class="r-cm"># overlay more points</span>
+<span class="r-func">lines</span>(x, y3, col <span class="r-op">=</span> <span class="r-str">"green"</span>)   <span class="r-cm"># overlay a line</span>
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>)         <span class="r-cm"># horizontal dashed reference line</span>
+<span class="r-func">legend</span>(<span class="r-str">"topright"</span>,
+       legend <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"A"</span>, <span class="r-str">"B"</span>),
+       col    <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"red"</span>, <span class="r-str">"green"</span>),
+       lty    <span class="r-op">=</span> <span class="r-num">1</span>, lwd <span class="r-op">=</span> <span class="r-num">2</span>)</code></pre>
+
+  <h3>Multiple plots in one window</h3>
+<pre><code><span class="r-func">par</span>(mfrow <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">2</span>))   <span class="r-cm"># 1 row, 2 columns</span>
+<span class="r-func">qqnorm</span>(res); <span class="r-func">qqline</span>(res)
+<span class="r-func">plot</span>(fit, res); <span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>)
+<span class="r-func">par</span>(mfrow <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">1</span>))   <span class="r-cm"># reset back to single plot</span></code></pre>
+</div>
+
+<div class="section" id="pitfalls">
+  <h2><span class="num">§ 15</span>Common Pitfalls</h2>
+
+  <h3>1. Character used where a factor is needed</h3>
+  <p>If <code>treat</code> is a character vector (not a factor), <code>aov()</code> may still work but printing coefficients gets confusing. Convert with <code>factor()</code> before modelling.</p>
+
+  <h3>2. Missing values silently propagate</h3>
+  <p><code>mean(x)</code> where <code>x</code> contains a single NA returns NA. Add <code>na.rm = TRUE</code>: <code>mean(x, na.rm = TRUE)</code>.</p>
+
+  <h3>3. Integer overflow</h3>
+  <p>Very large integer arithmetic can overflow. Use doubles: multiply by <code>1.0</code> to force conversion.</p>
+
+  <h3>4. Case sensitive names</h3>
+  <p><code>Yield</code> is not the same as <code>yield</code>. R errors will complain "object not found". Check your capitalisation.</p>
+
+  <h3>5. Wrong assignment direction</h3>
+  <p><code>5 -&gt; x</code> is legal R (right assignment) but almost always a mistake. Stick with <code>&lt;-</code> or <code>=</code>.</p>
+
+  <h3>6. Forgetting to reset par()</h3>
+  <p>After <code>par(mfrow = c(2, 2))</code>, R stays in 2x2 layout until you set it back to <code>c(1, 1)</code> or restart R.</p>
+
+  <h3>7. Working directory drift</h3>
+  <p>If <code>read.csv("data.csv")</code> fails with "cannot open connection", your working directory is not what you think. Check with <code>getwd()</code>, fix with <code>setwd()</code> or (better) use RStudio's <strong>Session → Set Working Directory → To Source File Location</strong>.</p>
+
+  <h3>8. Package not loaded</h3>
+  <p>Installed once with <code>install.packages("readxl")</code>, but you still need <code>library(readxl)</code> at the top of every script that uses it.</p>
+
+  <div class="warn-box">
+    <strong>Debugging tip.</strong> When an error hits, look at the last function name mentioned. Then check the arguments you passed to it, especially their types. 80% of R errors are type mismatches or misspelled column names.
+  </div>
+</div>
+
+</div>
+
+<a href="#top" class="back-top">↑ Back to top</a>
+
+</body>
+</html>
