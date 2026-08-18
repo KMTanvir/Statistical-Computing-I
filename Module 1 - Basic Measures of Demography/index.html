@@ -310,7 +310,7 @@ F <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(pop<span class
 
 <span class="r-cm"># Masculinity Proportion</span>
 MP <span class="r-op">&lt;-</span> M <span class="r-op">/</span> (M <span class="r-op">+</span> F) <span class="r-op">*</span> <span class="r-num">100</span>
-<span class="r-func">round</span>(MP, <span class="r-num">2</span>)
+MP
 <span class="r-cm">#&gt; [1] 49.58</span></code></pre>
 
         <div class="example-box">
@@ -342,7 +342,7 @@ MP <span class="r-op">&lt;-</span> M <span class="r-op">/</span> (M <span class=
         </div>
 
 <pre><code>SR <span class="r-op">&lt;-</span> M <span class="r-op">/</span> F <span class="r-op">*</span> <span class="r-num">100</span>
-<span class="r-func">round</span>(SR, <span class="r-num">2</span>)
+SR
 <span class="r-cm">#&gt; [1] 98.34</span></code></pre>
 
         <p>A Sex Ratio of <strong>98.34</strong> means there are about 98 males for every 100 females in Pabna 2022. Values below 100 indicate a female majority, values above 100 indicate a male majority.</p>
@@ -404,7 +404,7 @@ P_65    <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(pop<span
 <span class="r-cm">#&gt;  793900 1685200  144200</span>
 
 ACR <span class="r-op">&lt;-</span> P_65 <span class="r-op">/</span> P_0_14 <span class="r-op">*</span> <span class="r-num">100</span>
-<span class="r-func">round</span>(ACR, <span class="r-num">2</span>)
+ACR
 <span class="r-cm">#&gt; [1] 18.16</span></code></pre>
 
         <div class="example-box">
@@ -435,7 +435,7 @@ ACR <span class="r-op">&lt;-</span> P_65 <span class="r-op">/</span> P_0_14 <spa
 CDR  <span class="r-op">&lt;-</span> P_0_14            <span class="r-op">/</span> P_15_64 <span class="r-op">*</span> <span class="r-num">100</span>
 OADR <span class="r-op">&lt;-</span> P_65              <span class="r-op">/</span> P_15_64 <span class="r-op">*</span> <span class="r-num">100</span>
 
-<span class="r-func">round</span>(<span class="r-func">c</span>(Total <span class="r-op">=</span> TDR, Child <span class="r-op">=</span> CDR, OldAge <span class="r-op">=</span> OADR), <span class="r-num">2</span>)
+<span class="r-func">c</span>(Total <span class="r-op">=</span> TDR, Child <span class="r-op">=</span> CDR, OldAge <span class="r-op">=</span> OADR)
 <span class="r-cm">#&gt;  Total  Child OldAge </span>
 <span class="r-cm">#&gt;  55.67  47.11   8.56</span></code></pre>
 
@@ -473,37 +473,45 @@ OADR <span class="r-op">&lt;-</span> P_65              <span class="r-op">/</spa
         <h2>Population Pyramid in R</h2>
         <p class="slide-subtitle">The single chart that summarises a population at a glance.</p>
 
-        <p>A population pyramid is a back to back horizontal bar chart: each age band has one bar going left for males and one bar going right for females. In base R you can build it in a few lines using <code>barplot()</code> by plotting the male counts as <strong>negative</strong> numbers.</p>
+        <p>A population pyramid is a back to back horizontal bar chart: each age band has one bar going left for males and one bar going right for females. The cleanest way in base R is <strong>two <code>barplot()</code> calls on the same panel</strong>. Draw the male bars first with negative values (so they extend to the left), then overlay the female bars with <code>add = TRUE</code> so they extend to the right.</p>
 
-        <h3>The code, line by line</h3>
-<pre><code>op <span class="r-op">&lt;-</span> <span class="r-func">par</span>(no.readonly <span class="r-op">=</span> <span class="r-kw">TRUE</span>)         <span class="r-cm"># 1. save current par so we can restore it later</span>
-<span class="r-func">par</span>(mar <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-num">4</span>, <span class="r-num">5</span>, <span class="r-num">3</span>, <span class="r-num">2</span>))              <span class="r-cm"># 2. widen the left margin to fit the age labels</span>
+        <h3>The code</h3>
+<pre><code><span class="r-cm"># 1. Male bars, negative so they go to the left of 0</span>
+<span class="r-func">barplot</span>(<span class="r-op">-</span>pop<span class="r-op">$</span>male,
+        horiz     <span class="r-op">=</span> <span class="r-kw">TRUE</span>,
+        names.arg <span class="r-op">=</span> pop<span class="r-op">$</span>age_group,
+        space     <span class="r-op">=</span> <span class="r-num">0</span>,
+        col       <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+        xlim      <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-op">-</span><span class="r-num">160000</span>, <span class="r-num">160000</span>),
+        xlab      <span class="r-op">=</span> <span class="r-str">"Population"</span>,
+        main      <span class="r-op">=</span> <span class="r-str">"Pabna District, 2022"</span>,
+        las       <span class="r-op">=</span> <span class="r-num">1</span>,
+        axes      <span class="r-op">=</span> <span class="r-kw">FALSE</span>)
 
-mat <span class="r-op">&lt;-</span> <span class="r-func">rbind</span>(<span class="r-op">-</span>pop<span class="r-op">$</span>male, pop<span class="r-op">$</span>female)     <span class="r-cm"># 3. one matrix, males negated so they fall to the left of 0</span>
+<span class="r-cm"># 2. Female bars, positive so they go to the right; overlay same panel</span>
+<span class="r-func">barplot</span>(pop<span class="r-op">$</span>female,
+        horiz <span class="r-op">=</span> <span class="r-kw">TRUE</span>,
+        space <span class="r-op">=</span> <span class="r-num">0</span>,
+        col   <span class="r-op">=</span> <span class="r-str">"#f472b6"</span>,
+        add   <span class="r-op">=</span> <span class="r-kw">TRUE</span>,
+        axes  <span class="r-op">=</span> <span class="r-kw">FALSE</span>)
 
-<span class="r-func">barplot</span>(mat,
-        horiz     <span class="r-op">=</span> <span class="r-kw">TRUE</span>,                  <span class="r-cm"># 4. horizontal bars instead of vertical</span>
-        names.arg <span class="r-op">=</span> pop<span class="r-op">$</span>age_group,         <span class="r-cm"># 5. age band label next to each row, youngest at the bottom</span>
-        beside    <span class="r-op">=</span> <span class="r-kw">FALSE</span>,                 <span class="r-cm"># 6. stack the two rows so each age band is one paired bar</span>
-        space     <span class="r-op">=</span> <span class="r-num">0</span>,                     <span class="r-cm"># 7. no gap between adjacent age bands, classic pyramid look</span>
-        col       <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"#2563eb"</span>, <span class="r-str">"#f472b6"</span>),  <span class="r-cm"># 8. blue for male, pink for female</span>
-        xlab      <span class="r-op">=</span> <span class="r-str">"Population (males left, females right)"</span>,   <span class="r-cm"># 9. x axis title</span>
-        main      <span class="r-op">=</span> <span class="r-str">"Pabna District, 2022"</span>,  <span class="r-cm"># 10. plot title</span>
-        las       <span class="r-op">=</span> <span class="r-num">1</span>,                      <span class="r-cm"># 11. age labels printed horizontally, not rotated</span>
-        xlim      <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-op">-</span><span class="r-num">160000</span>, <span class="r-num">160000</span>),     <span class="r-cm"># 12. symmetric x range so the pyramid is centred</span>
-        axes      <span class="r-op">=</span> <span class="r-kw">FALSE</span>)                  <span class="r-cm"># 13. suppress the default x axis, we redraw it below</span>
+<span class="r-cm"># 3. Draw a clean x axis with positive labels on both sides</span>
+ticks <span class="r-op">&lt;-</span> <span class="r-func">seq</span>(<span class="r-op">-</span><span class="r-num">150000</span>, <span class="r-num">150000</span>, by <span class="r-op">=</span> <span class="r-num">50000</span>)
+<span class="r-func">axis</span>(<span class="r-num">1</span>, at <span class="r-op">=</span> ticks, labels <span class="r-op">=</span> <span class="r-func">abs</span>(ticks))
 
-ticks <span class="r-op">&lt;-</span> <span class="r-func">seq</span>(<span class="r-op">-</span><span class="r-num">150000</span>, <span class="r-num">150000</span>, by <span class="r-op">=</span> <span class="r-num">50000</span>)   <span class="r-cm"># 14. tick positions every 50,000</span>
-<span class="r-func">axis</span>(<span class="r-num">1</span>, at <span class="r-op">=</span> ticks, labels <span class="r-op">=</span> <span class="r-func">abs</span>(ticks))   <span class="r-cm"># 15. redraw x axis with positive labels on both sides</span>
-
-<span class="r-func">legend</span>(<span class="r-str">"topright"</span>, legend <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"Male"</span>, <span class="r-str">"Female"</span>),
-       fill <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"#2563eb"</span>, <span class="r-str">"#f472b6"</span>),
-       bty  <span class="r-op">=</span> <span class="r-str">"n"</span>)                          <span class="r-cm"># 16. legend in the top right, no border box</span>
-
-<span class="r-func">par</span>(op)                                    <span class="r-cm"># 17. restore the original par settings</span></code></pre>
+<span class="r-cm"># 4. Legend</span>
+<span class="r-func">legend</span>(<span class="r-str">"topright"</span>,
+       legend <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"Male"</span>, <span class="r-str">"Female"</span>),
+       fill   <span class="r-op">=</span> <span class="r-func">c</span>(<span class="r-str">"#2563eb"</span>, <span class="r-str">"#f472b6"</span>),
+       bty    <span class="r-op">=</span> <span class="r-str">"n"</span>)</code></pre>
 
         <div class="tip-box">
-          <strong>Reading order of the rows:</strong> <code>barplot()</code> draws horizontal bars from the <em>bottom up</em> in the order the columns appear. Because our data frame is sorted youngest first, age band <strong>0 to 4</strong> ends up at the bottom and <strong>80+</strong> at the top, the standard pyramid orientation.
+          <strong>Why two barplot calls, not one.</strong> Using a single stacked matrix like <code>rbind(-male, female)</code> makes the female bars start where the male bars ended (in negative territory) and extend right, so they end up on the wrong side of zero. Two separate calls with <code>add = TRUE</code> keep each side independent and give a clean pyramid every time.
+        </div>
+
+        <div class="tip-box">
+          <strong>Reading order of the rows:</strong> <code>barplot()</code> draws horizontal bars from the <em>bottom up</em> in the order they appear. Because our data frame is sorted youngest first, age band <strong>0 to 4</strong> ends up at the bottom and <strong>80+</strong> at the top, the standard pyramid orientation.
         </div>
 
         <h3>What the chart looks like</h3>
@@ -636,7 +644,7 @@ ticks <span class="r-op">&lt;-</span> <span class="r-func">seq</span>(<span clas
             <tr><td>Excess of Males</td><td>M &minus; F (target SR = 100)</td><td><code>sum(pop$male) - sum(pop$female)</code></td></tr>
             <tr><td>Aged Child Ratio</td><td>P<sub>65+</sub> / P<sub>0-14</sub> &times; 100</td><td><code>P_65 / P_0_14 * 100</code></td></tr>
             <tr><td>Total Dependency Ratio</td><td>(P<sub>0-14</sub> + P<sub>65+</sub>) / P<sub>15-64</sub> &times; 100</td><td><code>(P_0_14 + P_65) / P_15_64 * 100</code></td></tr>
-            <tr><td>Population Pyramid</td><td>back to back bar chart</td><td><code>barplot(rbind(-pop$male, pop$female), horiz = TRUE, ...)</code></td></tr>
+            <tr><td>Population Pyramid</td><td>back to back bar chart</td><td><code>barplot(-pop$male, horiz = TRUE, ...); barplot(pop$female, add = TRUE, ...)</code></td></tr>
           </tbody>
         </table>
 
@@ -1079,14 +1087,14 @@ const exercises = [
     diff: "easy",
     prompt: "The block below gives the Sylhet District 2022 age and sex breakdown (illustrative). Type it into R as a data frame called <code>syl</code>, then compute the <strong>Masculinity Proportion</strong> and the <strong>Sex Ratio</strong>. Round both to two decimals.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>age_group: 0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80+\nmale:     196500, 213400, 218700, 198500, 168300, 142800, 128400, 114700, 98300, 82600, 67800, 54300, 42800, 31200, 21400, 12700, 8900\nfemale:   188200, 204800, 209300, 192400, 178500, 152400, 138600, 121200, 102800, 85400, 70200, 56800, 44500, 32800, 23500, 14800, 12200</code>",
     hint: "Make three vectors with c(), bind them into a data frame, then use sum() on each column.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group &lt;- c(\"0-4\",\"5-9\",\"10-14\",\"15-19\",\"20-24\",\"25-29\",\"30-34\",\"35-39\",\"40-44\",\"45-49\",\"50-54\",\"55-59\",\"60-64\",\"65-69\",\"70-74\",\"75-79\",\"80+\")\nmale   &lt;- c(196500,213400,218700,198500,168300,142800,128400,114700,98300,82600,67800,54300,42800,31200,21400,12700,8900)\nfemale &lt;- c(188200,204800,209300,192400,178500,152400,138600,121200,102800,85400,70200,56800,44500,32800,23500,14800,12200)\nsyl &lt;- data.frame(age_group, male, female)\n\nM &lt;- sum(syl$male)    # 1,801,300\nF &lt;- sum(syl$female)  # 1,828,400\n\nround(M / (M + F) * 100, 2)  # MP ≈ 49.62\nround(M / F * 100, 2)        # SR ≈ 98.52</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group &lt;- c(\"0-4\",\"5-9\",\"10-14\",\"15-19\",\"20-24\",\"25-29\",\"30-34\",\"35-39\",\"40-44\",\"45-49\",\"50-54\",\"55-59\",\"60-64\",\"65-69\",\"70-74\",\"75-79\",\"80+\")\nmale   &lt;- c(196500,213400,218700,198500,168300,142800,128400,114700,98300,82600,67800,54300,42800,31200,21400,12700,8900)\nfemale &lt;- c(188200,204800,209300,192400,178500,152400,138600,121200,102800,85400,70200,56800,44500,32800,23500,14800,12200)\nsyl &lt;- data.frame(age_group, male, female)\n\nM &lt;- sum(syl$male)    # 1,801,300\nF &lt;- sum(syl$female)  # 1,828,400\n\nM / (M + F) * 100  # MP ≈ 49.62\nM / F * 100        # SR ≈ 98.52</pre>"
   },
   {
     title: "2. Aged Child Ratio for Sylhet",
     diff: "easy",
     prompt: "Using the <code>syl</code> data frame from Exercise 1, compute the Aged Child Ratio. Report your answer rounded to two decimals and write one sentence interpreting it.",
     hint: "Add a total column, then sum rows 1 to 3 for ages 0 to 14 and rows 14 to 17 for ages 65 and over.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>syl$total &lt;- syl$male + syl$female\n\nP_0_14 &lt;- sum(syl$total[1:3])     # 1,230,900\nP_65   &lt;- sum(syl$total[14:17])   # 157,500\n\nACR &lt;- P_65 / P_0_14 * 100\nround(ACR, 2)   # ≈ 12.80\n\n# Interpretation: for every 100 children aged 0 to 14 in Sylhet,\n# there are about 13 older adults aged 65 and over. A young population.</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>syl$total &lt;- syl$male + syl$female\n\nP_0_14 &lt;- sum(syl$total[1:3])     # 1,230,900\nP_65   &lt;- sum(syl$total[14:17])   # 157,500\n\nACR &lt;- P_65 / P_0_14 * 100\nACR   # ≈ 12.80\n\n# Interpretation: for every 100 children aged 0 to 14 in Sylhet,\n# there are about 13 older adults aged 65 and over. A young population.</pre>"
   },
   {
     title: "3. Total female population aged 20 to 39",
@@ -1100,7 +1108,7 @@ const exercises = [
     diff: "med",
     prompt: "Compute the <strong>Total</strong>, <strong>Child</strong>, and <strong>Old Age</strong> Dependency Ratios for Sylhet. Return them in a single named numeric vector, rounded to two decimals. Confirm that TDR = CDR + OADR (or as close as floating point allows).",
     hint: "Reuse P_0_14 and P_65 from Exercise 2. Compute P_15_64 from rows 4 to 13. Then divide and multiply by 100.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>P_15_64 &lt;- sum(syl$total[4:13])   # 2,241,300\n\nTDR  &lt;- (P_0_14 + P_65) / P_15_64 * 100\nCDR  &lt;- P_0_14            / P_15_64 * 100\nOADR &lt;- P_65              / P_15_64 * 100\n\nround(c(Total = TDR, Child = CDR, OldAge = OADR), 2)\n#  Total  Child OldAge\n#  61.95  54.92   7.03\n\nall.equal(TDR, CDR + OADR)   # TRUE</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>P_15_64 &lt;- sum(syl$total[4:13])   # 2,241,300\n\nTDR  &lt;- (P_0_14 + P_65) / P_15_64 * 100\nCDR  &lt;- P_0_14            / P_15_64 * 100\nOADR &lt;- P_65              / P_15_64 * 100\n\nc(Total = TDR, Child = CDR, OldAge = OADR)\n#  Total  Child OldAge\n#  61.95  54.92   7.03\n\nall.equal(TDR, CDR + OADR)   # TRUE</pre>"
   },
   {
     title: "5. Excess (or Deficit) of Males with a target SR = 100",
@@ -1114,14 +1122,14 @@ const exercises = [
     diff: "med",
     prompt: "Suppose you only have the Sylhet data in long format: one row per (age_group, sex, count). Pivot it back to wide using either <code>reshape()</code> or <code>tapply()</code>, then recompute the Total Dependency Ratio to confirm you get the same answer as in Exercise 4.",
     hint: "tapply(count, list(age_group, sex), sum) gives a matrix; rownames carry age_group. Or use reshape() with direction = \"wide\".",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'># Build a long format version from syl (just for the exercise)\nlong &lt;- rbind(\n  data.frame(age_group = syl$age_group, sex = \"male\",   count = syl$male),\n  data.frame(age_group = syl$age_group, sex = \"female\", count = syl$female)\n)\n\n# Wide using tapply\nwide &lt;- tapply(long$count, list(long$age_group, long$sex), sum)\nwide &lt;- wide[syl$age_group, ]   # restore age order\n\ntotal_by_age &lt;- rowSums(wide)\nP_0_14  &lt;- sum(total_by_age[1:3])\nP_15_64 &lt;- sum(total_by_age[4:13])\nP_65    &lt;- sum(total_by_age[14:17])\n\nround((P_0_14 + P_65) / P_15_64 * 100, 2)\n# 61.95  (matches Exercise 4)</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'># Build a long format version from syl (just for the exercise)\nlong &lt;- rbind(\n  data.frame(age_group = syl$age_group, sex = \"male\",   count = syl$male),\n  data.frame(age_group = syl$age_group, sex = \"female\", count = syl$female)\n)\n\n# Wide using tapply\nwide &lt;- tapply(long$count, list(long$age_group, long$sex), sum)\nwide &lt;- wide[syl$age_group, ]   # restore age order\n\ntotal_by_age &lt;- rowSums(wide)\nP_0_14  &lt;- sum(total_by_age[1:3])\nP_15_64 &lt;- sum(total_by_age[4:13])\nP_65    &lt;- sum(total_by_age[14:17])\n\n(P_0_14 + P_65) / P_15_64 * 100\n# 61.95  (matches Exercise 4)</pre>"
   },
   {
     title: "7. Build the Sylhet population pyramid",
     diff: "hard",
     prompt: "Write the full R code that produces a labelled back to back population pyramid for Sylhet using <code>barplot()</code>. Include: blue bars for males, pink for females, age group labels on the y axis, positive tick labels on both sides of the x axis, a title, and a legend.",
-    hint: "Negate the male column, rbind it with female, set horiz = TRUE, beside = FALSE, and space = 0 for the no gap look. Suppress the default axis with axes = FALSE, then redraw it with abs() labels.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>op &lt;- par(no.readonly = TRUE)\npar(mar = c(4, 5, 3, 2))\n\nmat &lt;- rbind(-syl$male, syl$female)\n\nbarplot(mat,\n        horiz     = TRUE,\n        names.arg = syl$age_group,\n        beside    = FALSE,\n        space     = 0,                           # no gap between age bands\n        col       = c(\"#2563eb\", \"#f472b6\"),\n        xlab      = \"Population (males left, females right)\",\n        main      = \"Sylhet District, 2022\",\n        las       = 1,\n        xlim      = c(-250000, 250000),\n        axes      = FALSE)\n\nticks &lt;- seq(-250000, 250000, by = 50000)\naxis(1, at = ticks, labels = abs(ticks))\n\nlegend(\"topright\",\n       legend = c(\"Male\", \"Female\"),\n       fill   = c(\"#2563eb\", \"#f472b6\"),\n       bty    = \"n\")\n\npar(op)</pre>"
+    hint: "Two barplot calls. First plot -syl$male so males go left. Then plot syl$female with add = TRUE so females overlay on the right. Set space = 0 for touching bars and axes = FALSE, then draw a clean x axis with abs() labels.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'># 1. Male bars, negative -> go left\nbarplot(-syl$male,\n        horiz     = TRUE,\n        names.arg = syl$age_group,\n        space     = 0,\n        col       = \"#2563eb\",\n        xlim      = c(-250000, 250000),\n        xlab      = \"Population\",\n        main      = \"Sylhet District, 2022\",\n        las       = 1,\n        axes      = FALSE)\n\n# 2. Female bars, positive -> overlay on the right\nbarplot(syl$female,\n        horiz = TRUE,\n        space = 0,\n        col   = \"#f472b6\",\n        add   = TRUE,\n        axes  = FALSE)\n\n# 3. X axis with positive labels on both sides\nticks &lt;- seq(-250000, 250000, by = 50000)\naxis(1, at = ticks, labels = abs(ticks))\n\n# 4. Legend\nlegend(\"topright\",\n       legend = c(\"Male\", \"Female\"),\n       fill   = c(\"#2563eb\", \"#f472b6\"),\n       bty    = \"n\")</pre>"
   }
 ];
 

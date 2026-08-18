@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5: Completely Randomized Design</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+table.data-table.compact th, table.data-table.compact td { padding: 6px 9px; font-size: 12px; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+.quiz-intro { background: white; padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.quiz-intro h2 { color: var(--primary-dark); margin-bottom: 8px; }
+.quiz-intro p { color: var(--muted); margin-bottom: 14px; }
+.quiz-question { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.quiz-question h4 { font-size: 16px; margin-bottom: 14px; color: var(--text); font-weight: 600; }
+.quiz-question .q-num { color: var(--primary); font-weight: 700; margin-right: 8px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { padding: 11px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: white; transition: all var(--transition); font-size: 14px; color: var(--text); text-align: left; font-family: inherit; }
+.quiz-option:hover { border-color: var(--primary); background: var(--primary-light); transform: translateX(2px); }
+.quiz-option.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 500; }
+.quiz-option.correct { border-color: var(--success); background: var(--success-light); color: var(--success); font-weight: 600; }
+.quiz-option.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+.quiz-option.disabled { pointer-events: none; }
+.quiz-explain { display: none; margin-top: 10px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid var(--primary); border-radius: 4px; font-size: 13px; color: #334155; }
+.quiz-explain.show { display: block; }
+.quiz-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); flex-wrap: wrap; }
+.quiz-progress-text { font-size: 13px; color: var(--muted); }
+.quiz-result { display: none; padding: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%); border-radius: var(--radius); text-align: center; margin-top: 16px; box-shadow: var(--shadow); animation: fadeIn 0.4s ease; }
+.quiz-result.show { display: block; }
+.quiz-result h3 { font-size: 24px; margin-bottom: 10px; color: var(--primary-dark); }
+.quiz-result .score { font-size: 48px; font-weight: 700; color: var(--primary); margin: 14px 0; line-height: 1; }
+.quiz-result .score .total { font-size: 26px; color: var(--muted); }
+.quiz-result p { color: #334155; margin-bottom: 16px; font-size: 15px; }
+.quiz-result .verdict { display: inline-block; padding: 6px 14px; border-radius: 16px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.quiz-result .verdict.great { background: var(--success-light); color: var(--success); }
+.quiz-result .verdict.good { background: var(--primary-light); color: var(--primary-dark); }
+.quiz-result .verdict.ok { background: var(--warning-light); color: var(--warning); }
+
+.flashcards-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.flashcards-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.flashcards-header p { color: var(--muted); font-size: 14px; }
+.flashcards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.flashcard { perspective: 1000px; height: 200px; cursor: pointer; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.55s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: var(--shadow); }
+.flashcard-front { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid var(--primary-light); color: var(--primary-dark); font-weight: 600; font-size: 17px; }
+.flashcard-front .hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 8px; font-style: italic; }
+.flashcard-back { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; transform: rotateY(180deg); font-size: 13px; line-height: 1.5; }
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.chart-svg { display: block; margin: 14px auto; max-width: 100%; height: auto; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ HEADER ============ -->
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 5</span>
+  <h1>Completely Randomized Design (CRD) in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<!-- ============ STATS ============ -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="quizStat">—</div><div class="stat-label">Quiz Score</div></div>
+  <div class="stat"><div class="stat-value" id="flipStat">0</div><div class="stat-label">Cards Flipped</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<!-- ============ TABS ============ -->
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="quiz">📝 Quiz</button>
+  <button class="tab-btn" data-tab="flashcards">🃏 Flashcards</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+
+<!-- ============ SLIDES TAB ============ -->
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 9</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome + description -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 5</h2>
+        <p>The Completely Randomized Design (CRD) is the simplest experimental design and the foundation for everything that follows in Block 2. We will work through one full CRD analysis in R, from raw data to confidence intervals.</p>
+
+        <h3>Description of CRD</h3>
+        <ul>
+          <li>The simplest design to use. Treatments are assigned to experimental units <strong>completely at random</strong>.</li>
+          <li>Used when experimental units are essentially <strong>homogeneous</strong>, no obvious nuisance factor.</li>
+          <li>Because of the homogeneity requirement, it can be difficult to use for field experiments where soil, weather, or location vary.</li>
+          <li>Best suited to experiments with a <strong>small number of treatments</strong> and a moderate number of replicates per treatment.</li>
+        </ul>
+
+        <h3>What you will be able to do by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li>State the linear additive model for CRD and the hypothesis test of interest</li>
+          <li>Compute the ANOVA table manually (SS, df, MS, F) on a small dataset</li>
+          <li>Run the same analysis in one line with <code>aov()</code> and <code>summary()</code></li>
+          <li>Check model adequacy with normality, equal variance, and independence plots</li>
+          <li>Build one at a time and Bonferroni simultaneous confidence intervals for treatment means</li>
+          <li>Perform pairwise comparisons with Tukey's Honest Significant Difference (HSD) test</li>
+        </ul>
+        <p style="margin-top: 14px; color: var(--muted); font-size: 14px;">When you are ready, click <strong>Next →</strong> to begin.</p>
+      </div>
+
+      <!-- SLIDE 2: Linear model + hypothesis -->
+      <div class="slide" data-slide="2">
+        <h2>The Linear Additive Model and the Hypothesis</h2>
+
+        <h3>Fixed effects model for CRD</h3>
+        <p>Each observation is the sum of an overall mean, a treatment effect, and a random error.</p>
+
+        <div class="formula-box">
+          y<sub>ij</sub> &nbsp;=&nbsp; &mu; &nbsp;+&nbsp; &tau;<sub>i</sub> &nbsp;+&nbsp; &epsilon;<sub>ij</sub>
+        </div>
+        <p style="text-align: center;">i = 1, ..., a treatments; j = 1, ..., n replicates per treatment</p>
+
+        <ul>
+          <li><code>y<sub>ij</sub></code> is the jth observation under the ith treatment.</li>
+          <li><code>&mu;</code> is the overall mean across the whole experiment.</li>
+          <li><code>&tau;<sub>i</sub></code> is the effect of the ith treatment, measured as deviation from the overall mean.</li>
+          <li><code>&epsilon;<sub>ij</sub></code> is the random error, assumed <strong>iid Normal with mean 0 and variance &sigma;<sup>2</sup></strong>.</li>
+        </ul>
+
+        <h3>The hypothesis we test</h3>
+        <div class="example-box">
+          <strong>H<sub>0</sub>:</strong> &tau;<sub>1</sub> = &tau;<sub>2</sub> = ... = &tau;<sub>a</sub> = 0 &nbsp;&nbsp; (all treatments have the same mean)<br><br>
+          <strong>H<sub>1</sub>:</strong> at least one &tau;<sub>i</sub> &ne; 0 &nbsp;&nbsp; (at least one treatment mean is different)
+        </div>
+
+        <h3>Assumptions, the three we will check</h3>
+        <ol>
+          <li><strong>Normality</strong> of errors. Checked with a QQ plot of residuals.</li>
+          <li><strong>Equal variance</strong> across treatments (homoscedasticity). Checked with a residuals vs fitted plot.</li>
+          <li><strong>Independence</strong> of errors. Checked by plotting residuals against time or run order.</li>
+        </ol>
+
+        <div class="tip-box">
+          <strong>Why these three?</strong> The F test in ANOVA assumes the errors are independent draws from a single Normal distribution. If any of the three is grossly violated, the F statistic does not follow its theoretical distribution and the p value is unreliable.
+        </div>
+      </div>
+
+      <!-- SLIDE 3: Working dataset -->
+      <div class="slide" data-slide="3">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">BARI rice fertilizer trial 2024, 4 treatments and 5 replicate plots each.</p>
+
+        <p>The Bangladesh Agricultural Research Institute (BARI) ran a CRD trial comparing four fertilizer regimes on rice yield (Mg per hectare). Twenty homogeneous plots were assigned at random, five per fertilizer. Treatments are <strong>Urea</strong>, <strong>NPK</strong>, <strong>Compost</strong>, and <strong>Mixed</strong> (NPK + compost).</p>
+
+        <h3>Type the data into R</h3>
+<pre><code><span class="r-cm"># Four fertilizer treatments, five replicates each</span>
+treat <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-func">c</span>(<span class="r-str">"Urea"</span>, <span class="r-str">"NPK"</span>, <span class="r-str">"Compost"</span>, <span class="r-str">"Mixed"</span>), each <span class="r-op">=</span> <span class="r-num">5</span>)
+yield <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">4.2</span>, <span class="r-num">4.8</span>, <span class="r-num">4.0</span>, <span class="r-num">4.5</span>, <span class="r-num">4.4</span>,    <span class="r-cm"># Urea</span>
+            <span class="r-num">5.3</span>, <span class="r-num">4.7</span>, <span class="r-num">5.1</span>, <span class="r-num">5.5</span>, <span class="r-num">4.9</span>,    <span class="r-cm"># NPK</span>
+            <span class="r-num">4.1</span>, <span class="r-num">3.8</span>, <span class="r-num">4.3</span>, <span class="r-num">3.9</span>, <span class="r-num">4.2</span>,    <span class="r-cm"># Compost</span>
+            <span class="r-num">5.4</span>, <span class="r-num">5.9</span>, <span class="r-num">5.3</span>, <span class="r-num">5.7</span>, <span class="r-num">5.6</span>)    <span class="r-cm"># Mixed</span>
+
+rice <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(treat <span class="r-op">=</span> <span class="r-func">factor</span>(treat), yield)
+
+<span class="r-func">tapply</span>(rice<span class="r-op">$</span>yield, rice<span class="r-op">$</span>treat, mean)
+<span class="r-cm">#&gt; Compost   Mixed     NPK    Urea </span>
+<span class="r-cm">#&gt;    4.06    5.58    5.10    4.38</span></code></pre>
+
+        <h3>Eyeball it with a boxplot</h3>
+<pre><code><span class="r-func">boxplot</span>(yield <span class="r-op">~</span> treat, data <span class="r-op">=</span> rice,
+        col <span class="r-op">=</span> <span class="r-str">"#dbeafe"</span>, border <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+        xlab <span class="r-op">=</span> <span class="r-str">"Fertilizer"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Rice yield (Mg/ha)"</span>,
+        main <span class="r-op">=</span> <span class="r-str">"BARI Rice Trial 2024"</span>)</code></pre>
+
+        <h3>What the boxplot looks like</h3>
+        <svg class="chart-svg" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Boxplot of rice yield by fertilizer">
+          <style>
+            .ax { stroke: #475569; stroke-width: 1; }
+            .gr { stroke: #e2e8f0; stroke-width: 1; }
+            .lbl { font: 11px Inter, sans-serif; fill: #475569; }
+            .ttl { font: bold 14px Inter, sans-serif; fill: #1e293b; }
+            .axl { font: 11px Inter, sans-serif; fill: #64748b; }
+            .box { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; }
+            .med { stroke: #1d4ed8; stroke-width: 2.5; }
+            .whisker { stroke: #2563eb; stroke-width: 1.5; }
+          </style>
+          <text x="320" y="18" text-anchor="middle" class="ttl">BARI Rice Trial 2024, yield by fertilizer</text>
+          <!-- Grid lines -->
+          <line x1="80" y1="80" x2="610" y2="80" class="gr"/>
+          <line x1="80" y1="140" x2="610" y2="140" class="gr"/>
+          <line x1="80" y1="200" x2="610" y2="200" class="gr"/>
+          <line x1="80" y1="260" x2="610" y2="260" class="gr"/>
+          <!-- Y axis -->
+          <line x1="80" y1="40" x2="80" y2="310" class="ax"/>
+          <!-- y scale: 3.5 to 6.5, so range = 3.0; plot range y from 40 to 310 (270px); 1 unit = 90px -->
+          <text x="72" y="44" text-anchor="end" class="axl">6.5</text>
+          <text x="72" y="84" text-anchor="end" class="axl">6.0</text>
+          <text x="72" y="144" text-anchor="end" class="axl">5.5</text>
+          <text x="72" y="204" text-anchor="end" class="axl">5.0</text>
+          <text x="72" y="264" text-anchor="end" class="axl">4.5</text>
+          <text x="72" y="314" text-anchor="end" class="axl">4.0</text>
+          <text x="32" y="170" text-anchor="middle" class="axl" transform="rotate(-90 32 170)">Yield (Mg/ha)</text>
+
+          <!-- X axis -->
+          <line x1="80" y1="310" x2="610" y2="310" class="ax"/>
+          <text x="160" y="328" text-anchor="middle" class="axl">Urea</text>
+          <text x="290" y="328" text-anchor="middle" class="axl">NPK</text>
+          <text x="420" y="328" text-anchor="middle" class="axl">Compost</text>
+          <text x="550" y="328" text-anchor="middle" class="axl">Mixed</text>
+          <text x="340" y="348" text-anchor="middle" class="axl">Fertilizer treatment</text>
+
+          <!-- Boxes -->
+          <!-- Urea: min 4.0, Q1 4.2, median 4.4, Q3 4.5, max 4.8 -->
+          <!-- y = 310 - (val - 4) * 90 / 0.5 = 310 - (val - 4) * 180 -->
+          <!-- Wait, recompute: y=40 means val=6.5; y=310 means val=4. So y = 310 - (val - 4) * 90 -->
+          <!-- Urea: min 4.0 → 310; Q1 4.2 → 292; med 4.4 → 274; Q3 4.5 → 265; max 4.8 → 238 -->
+          <rect class="box" x="135" y="265" width="50" height="27"/>
+          <line class="med" x1="135" y1="274" x2="185" y2="274"/>
+          <line class="whisker" x1="160" y1="265" x2="160" y2="238"/>
+          <line class="whisker" x1="160" y1="292" x2="160" y2="310"/>
+          <line class="whisker" x1="150" y1="238" x2="170" y2="238"/>
+          <line class="whisker" x1="150" y1="310" x2="170" y2="310"/>
+
+          <!-- NPK: min 4.7, Q1 4.9, median 5.1, Q3 5.3, max 5.5 -->
+          <!-- 4.7 → 247; 4.9 → 229; 5.1 → 211; 5.3 → 193; 5.5 → 175 -->
+          <rect class="box" x="265" y="193" width="50" height="36"/>
+          <line class="med" x1="265" y1="211" x2="315" y2="211"/>
+          <line class="whisker" x1="290" y1="193" x2="290" y2="175"/>
+          <line class="whisker" x1="290" y1="229" x2="290" y2="247"/>
+          <line class="whisker" x1="280" y1="175" x2="300" y2="175"/>
+          <line class="whisker" x1="280" y1="247" x2="300" y2="247"/>
+
+          <!-- Compost: min 3.8, Q1 3.9, median 4.1, Q3 4.2, max 4.3 -->
+          <!-- 3.8 → 328; but our scale starts at 4.0; clip at 310 -->
+          <!-- Actually let me extend y scale to 3.5 = 355 -->
+          <!-- Recompute scale: 3.5 → 355, 6.5 → 40; range = 3, plot = 315; 1 unit = 105 -->
+          <!-- Or simpler: rescale y axis to 3.5-6.5 -->
+          <!-- y = 355 - (val - 3.5) * 105 = -->
+          <!-- Wait, let me just use the simpler version: y axis from 3.5 to 6.5 mapped to y=310 to y=40 -->
+          <!-- y = 40 + (6.5 - val) * 90 (since range=3 mapped to 270) -->
+          <!-- Check: val=6.5 → y=40 ✓; val=3.5 → y=40 + 3*90 = 310 ✓; val=5.0 → y=40 + 1.5*90 = 175 -->
+          <!-- Compost: 3.8 → 40+2.7*90=283; 3.9 → 40+2.6*90=274; 4.1 → 256; 4.2 → 247; 4.3 → 238 -->
+          <rect class="box" x="395" y="247" width="50" height="27"/>
+          <line class="med" x1="395" y1="256" x2="445" y2="256"/>
+          <line class="whisker" x1="420" y1="247" x2="420" y2="238"/>
+          <line class="whisker" x1="420" y1="274" x2="420" y2="283"/>
+          <line class="whisker" x1="410" y1="238" x2="430" y2="238"/>
+          <line class="whisker" x1="410" y1="283" x2="430" y2="283"/>
+
+          <!-- Mixed: min 5.3, Q1 5.4, median 5.6, Q3 5.7, max 5.9 -->
+          <!-- 5.3 → 40+1.2*90=148; 5.4 → 139; 5.6 → 121; 5.7 → 112; 5.9 → 94 -->
+          <rect class="box" x="525" y="112" width="50" height="27"/>
+          <line class="med" x1="525" y1="121" x2="575" y2="121"/>
+          <line class="whisker" x1="550" y1="112" x2="550" y2="94"/>
+          <line class="whisker" x1="550" y1="139" x2="550" y2="148"/>
+          <line class="whisker" x1="540" y1="94" x2="560" y2="94"/>
+          <line class="whisker" x1="540" y1="148" x2="560" y2="148"/>
+        </svg>
+
+        <div class="example-box">
+          <strong>What the boxplot suggests.</strong> The Mixed and NPK treatments visibly produce higher yields than Urea and Compost. The four boxes barely overlap. This is what we want to see <em>before</em> running the F test, a clear visual signal that treatment matters. The ANOVA will quantify that signal formally.
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Manual ANOVA -->
+      <div class="slide" data-slide="4">
+        <h2>Manual ANOVA Decomposition</h2>
+        <p>Before we hand it to <code>aov()</code>, let's walk through the calculation by hand to build intuition for what the F statistic measures.</p>
+
+        <h3>Notation and totals</h3>
+        <p>Let <code>a = 4</code> treatments and <code>n = 5</code> replicates per treatment, so <code>N = a × n = 20</code> total observations. Let <code>T<sub>i</sub></code> be the sum for treatment i and <code>G</code> the grand total.</p>
+
+        <table class="data-table compact">
+          <thead><tr><th>Treatment</th><th class="num">T<sub>i</sub> (sum)</th><th class="num">Mean</th></tr></thead>
+          <tbody>
+            <tr><td>Urea</td><td class="num">21.9</td><td class="num">4.38</td></tr>
+            <tr><td>NPK</td><td class="num">25.5</td><td class="num">5.10</td></tr>
+            <tr><td>Compost</td><td class="num">20.3</td><td class="num">4.06</td></tr>
+            <tr><td>Mixed</td><td class="num">27.9</td><td class="num">5.58</td></tr>
+            <tr class="hl"><td><strong>Grand</strong></td><td class="num"><strong>G = 95.6</strong></td><td class="num"><strong>ȳ = 4.78</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Sums of squares</h3>
+        <div class="formula-box">
+          CF &nbsp;=&nbsp; G<sup>2</sup> / N<br>
+          SS<sub>total</sub> &nbsp;=&nbsp; &Sigma; y<sup>2</sup> &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>treat</sub> &nbsp;=&nbsp; &Sigma; T<sub>i</sub><sup>2</sup> / n &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>error</sub> &nbsp;=&nbsp; SS<sub>total</sub> &nbsp;&minus;&nbsp; SS<sub>treat</sub>
+        </div>
+
+        <h3>Compute it in R, step by step</h3>
+<pre><code>a <span class="r-op">&lt;-</span> <span class="r-num">4</span>;  n <span class="r-op">&lt;-</span> <span class="r-num">5</span>;  N <span class="r-op">&lt;-</span> a <span class="r-op">*</span> n
+
+CF <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(rice<span class="r-op">$</span>yield)<span class="r-op">^</span><span class="r-num">2</span> <span class="r-op">/</span> N
+SST <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(rice<span class="r-op">$</span>yield<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">-</span> CF
+
+treat_sum <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(rice<span class="r-op">$</span>yield, rice<span class="r-op">$</span>treat, sum)
+SS_treat <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(treat_sum<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> n <span class="r-op">-</span> CF
+SSE <span class="r-op">&lt;-</span> SST <span class="r-op">-</span> SS_treat
+
+df_treat <span class="r-op">&lt;-</span> a <span class="r-op">-</span> <span class="r-num">1</span>          <span class="r-cm"># 3</span>
+df_error <span class="r-op">&lt;-</span> N <span class="r-op">-</span> a          <span class="r-cm"># 16</span>
+
+MS_treat <span class="r-op">&lt;-</span> SS_treat <span class="r-op">/</span> df_treat
+MSE      <span class="r-op">&lt;-</span> SSE      <span class="r-op">/</span> df_error
+F_calc   <span class="r-op">&lt;-</span> MS_treat <span class="r-op">/</span> MSE
+F_tab    <span class="r-op">&lt;-</span> <span class="r-func">qf</span>(<span class="r-num">0.95</span>, df_treat, df_error)
+
+<span class="r-func">c</span>(SS_treat <span class="r-op">=</span> SS_treat, SSE <span class="r-op">=</span> SSE,
+        MS_treat <span class="r-op">=</span> MS_treat, MSE <span class="r-op">=</span> MSE,
+        F_calc <span class="r-op">=</span> F_calc, F_tab <span class="r-op">=</span> F_tab)
+<span class="r-cm">#&gt;  SS_treat       SSE  MS_treat       MSE    F_calc     F_tab </span>
+<span class="r-cm">#&gt;     7.104     1.168     2.368     0.073    32.438     3.239</span></code></pre>
+
+        <div class="example-box">
+          <strong>The decision.</strong> F<sub>calc</sub> = 32.44 is far larger than F<sub>tab</sub> = 3.24 at &alpha; = 0.05. <strong>Reject H<sub>0</sub></strong>. At least one fertilizer treatment produces a different mean yield from the others.
+        </div>
+
+        <div class="practice" data-q="s4">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">In a CRD with 4 treatments and 5 reps each, the error degrees of freedom is:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">3</button>
+            <button class="practice-btn" data-correct="false">4</button>
+            <button class="practice-btn" data-correct="true">16</button>
+            <button class="practice-btn" data-correct="false">19</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: aov() in R -->
+      <div class="slide" data-slide="5">
+        <h2>One Line ANOVA with aov()</h2>
+        <p>The same calculation in two lines, using R's built in <code>aov()</code> function.</p>
+
+        <h3>Fit and summarise</h3>
+<pre><code>model <span class="r-op">&lt;-</span> <span class="r-func">aov</span>(yield <span class="r-op">~</span> treat, data <span class="r-op">=</span> rice)
+<span class="r-func">summary</span>(model)
+<span class="r-cm">#&gt;             Df Sum Sq Mean Sq F value   Pr(&gt;F)    </span>
+<span class="r-cm">#&gt; treat        3  7.104  2.3680   32.44  4.5e-07 ***</span>
+<span class="r-cm">#&gt; Residuals   16  1.168  0.0730                     </span>
+<span class="r-cm">#&gt; ---</span>
+<span class="r-cm">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></code></pre>
+
+        <p>Every number in the summary matches the manual computation on Slide 4. The <code>Pr(&gt;F)</code> column is the exact p value, here on the order of <code>10<sup>-7</sup></code>, far below any sensible &alpha;.</p>
+
+        <h3>The full ANOVA table</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Source</th><th class="num">df</th><th class="num">SS</th><th class="num">MS</th><th class="num">F</th><th class="num">p value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Treatment</td><td class="num">3</td><td class="num">7.104</td><td class="num">2.368</td><td class="num">32.44</td><td class="num">&lt; 0.001</td></tr>
+            <tr><td>Error</td><td class="num">16</td><td class="num">1.168</td><td class="num">0.073</td><td class="num"></td><td class="num"></td></tr>
+            <tr class="hl"><td><strong>Total</strong></td><td class="num"><strong>19</strong></td><td class="num"><strong>8.272</strong></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>Convert character treat to factor before aov().</strong> If <code>treat</code> is a plain character vector, R will still work, but converting it to a factor with <code>factor()</code> makes the design explicit and protects against accidental numeric coercion. We did this on Slide 3 with <code>factor(treat)</code>.
+        </div>
+      </div>
+
+      <!-- SLIDE 6: Model adequacy -->
+      <div class="slide" data-slide="6">
+        <h2>Model Adequacy Checks</h2>
+        <p>The F test result is only as good as the assumptions. Three diagnostic plots cover normality, equal variance, and independence.</p>
+
+        <h3>Compute residuals and fitted values</h3>
+<pre><code>res <span class="r-op">&lt;-</span> <span class="r-func">residuals</span>(model)
+fit <span class="r-op">&lt;-</span> <span class="r-func">fitted</span>(model)</code></pre>
+
+        <h3>1. Normality, QQ plot of residuals</h3>
+<pre><code><span class="r-func">qqnorm</span>(res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+       main <span class="r-op">=</span> <span class="r-str">"Normal QQ plot of residuals"</span>)
+<span class="r-func">qqline</span>(res, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>, lwd <span class="r-op">=</span> <span class="r-num">2</span>)</code></pre>
+        <p>Look for points scattering close to the diagonal reference line, especially through the middle of the plot. Mild curvature at the tails is usually acceptable.</p>
+
+        <h3>2. Equal variance, residuals vs fitted</h3>
+<pre><code><span class="r-func">plot</span>(fit, res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Fitted values"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Residuals vs Fitted"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)</code></pre>
+        <p>You want a horizontal band of points with no obvious pattern. A funnel shape, where spread grows with the fitted value, suggests unequal variances and may need a transformation of the response.</p>
+
+        <h3>3. Independence, residuals in run order</h3>
+<pre><code><span class="r-func">plot</span>(<span class="r-func">seq_along</span>(res), res, type <span class="r-op">=</span> <span class="r-str">"b"</span>, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Run order"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Residuals vs run order"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)</code></pre>
+        <p>If residuals show runs of positives followed by runs of negatives, time order is correlated with the outcome. In a properly randomised CRD this should not happen, but it is worth checking.</p>
+
+        <div class="warn-box">
+          <strong>Shortcut.</strong> <code>plot(model)</code> draws four standard diagnostic panels in one call (residuals vs fitted, QQ plot, scale location, leverage). Press <kbd>Return</kbd> in the console between panels.
+        </div>
+      </div>
+
+      <!-- SLIDE 7: Confidence intervals -->
+      <div class="slide" data-slide="7">
+        <h2>Confidence Intervals for Treatment Means</h2>
+        <p>An F test tells us treatments differ. Confidence intervals tell us <em>how much</em>, and with what precision.</p>
+
+        <h3>One at a time confidence interval</h3>
+        <div class="formula-box">
+          ȳ<sub>i.</sub> &nbsp;&plusmn;&nbsp; t<sub>&alpha;/2, N&minus;a</sub> &nbsp;&times;&nbsp; &radic;(MSE / n)
+        </div>
+        <p>This is the standard 95% CI for a single treatment mean. The standard error is &radic;(MSE / n), and the multiplier is the t critical value with N − a error degrees of freedom.</p>
+
+<pre><code><span class="r-cm"># 95% one at a time CI for the NPK mean</span>
+y_npk <span class="r-op">&lt;-</span> <span class="r-func">mean</span>(rice<span class="r-op">$</span>yield[rice<span class="r-op">$</span>treat <span class="r-op">==</span> <span class="r-str">"NPK"</span>])     <span class="r-cm"># 5.10</span>
+se    <span class="r-op">&lt;-</span> <span class="r-func">sqrt</span>(MSE <span class="r-op">/</span> n)                              <span class="r-cm"># 0.1208</span>
+tcrit <span class="r-op">&lt;-</span> <span class="r-func">qt</span>(<span class="r-num">0.975</span>, df_error)                       <span class="r-cm"># 2.1199</span>
+
+<span class="r-func">c</span>(lower <span class="r-op">=</span> y_npk <span class="r-op">-</span> tcrit <span class="r-op">*</span> se,
+  upper <span class="r-op">=</span> y_npk <span class="r-op">+</span> tcrit <span class="r-op">*</span> se)
+<span class="r-cm">#&gt;    lower    upper </span>
+<span class="r-cm">#&gt; 4.84398  5.35602</span></code></pre>
+
+        <h3>Bonferroni simultaneous confidence intervals</h3>
+        <p>When we build <code>r</code> intervals at the same time, the probability that <em>all</em> of them simultaneously contain their true means is no longer 1 − &alpha;. The Bonferroni correction divides &alpha; by <code>r</code>, ensuring the overall confidence level is at least 1 − &alpha;.</p>
+
+        <div class="formula-box">
+          Bonferroni multiplier: &nbsp; t<sub>&alpha;/(2r), N&minus;a</sub>
+        </div>
+
+<pre><code><span class="r-cm"># 95% Bonferroni simultaneous CIs for all 4 treatment means</span>
+r <span class="r-op">&lt;-</span> a                                            <span class="r-cm"># number of intervals</span>
+tcrit_bonf <span class="r-op">&lt;-</span> <span class="r-func">qt</span>(<span class="r-num">1</span> <span class="r-op">-</span> <span class="r-num">0.05</span> <span class="r-op">/</span> (<span class="r-num">2</span> <span class="r-op">*</span> r), df_error)  <span class="r-cm"># 2.8127</span>
+means <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(rice<span class="r-op">$</span>yield, rice<span class="r-op">$</span>treat, mean)
+
+bonf_ci <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(
+  treat <span class="r-op">=</span> <span class="r-func">names</span>(means),
+  mean  <span class="r-op">=</span> means,
+  lower <span class="r-op">=</span> means <span class="r-op">-</span> tcrit_bonf <span class="r-op">*</span> se,
+  upper <span class="r-op">=</span> means <span class="r-op">+</span> tcrit_bonf <span class="r-op">*</span> se
+)
+bonf_ci
+<span class="r-cm">#&gt;          treat mean lower upper</span>
+<span class="r-cm">#&gt; Compost Compost 4.06 3.720 4.400</span>
+<span class="r-cm">#&gt; Mixed     Mixed 5.58 5.240 5.920</span>
+<span class="r-cm">#&gt; NPK         NPK 5.10 4.760 5.440</span>
+<span class="r-cm">#&gt; Urea       Urea 4.38 4.040 4.720</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read the Bonferroni CIs.</strong> All four 95% intervals jointly cover their true means with probability at least 0.95. The Compost and Mixed intervals do not overlap, evidence that those two means really differ. Compare the Urea and Compost intervals: they overlap, so we cannot be confident that those two means differ.
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Tukey HSD -->
+      <div class="slide" data-slide="8">
+        <h2>Pairwise Comparison with Tukey HSD</h2>
+        <p>The F test says "at least one mean differs". To say <em>which</em> pairs differ, we need a multiple comparison procedure. Tukey's Honest Significant Difference (HSD) test is the standard choice for CRD with equal sample sizes.</p>
+
+        <div class="formula-box">
+          HSD &nbsp;=&nbsp; q<sub>&alpha;, a, N&minus;a</sub> &nbsp;&times;&nbsp; &radic;(MSE / n)
+        </div>
+        <p>Two treatment means are declared significantly different if the absolute difference between their sample means exceeds HSD. The multiplier <code>q</code> is the studentised range, looked up at level &alpha; with <code>a</code> groups and <code>N − a</code> error degrees of freedom.</p>
+
+        <h3>One line in R</h3>
+<pre><code><span class="r-func">TukeyHSD</span>(model, conf.level <span class="r-op">=</span> <span class="r-num">0.95</span>)
+<span class="r-cm">#&gt;   Tukey multiple comparisons of means</span>
+<span class="r-cm">#&gt;     95% family-wise confidence level</span>
+<span class="r-cm">#&gt;</span>
+<span class="r-cm">#&gt; $treat</span>
+<span class="r-cm">#&gt;                  diff      lwr      upr    p adj</span>
+<span class="r-cm">#&gt; Mixed-Compost    1.52   1.0290   2.0110   0.0000</span>
+<span class="r-cm">#&gt; NPK-Compost      1.04   0.5490   1.5310   0.0001</span>
+<span class="r-cm">#&gt; Urea-Compost     0.32  -0.1710   0.8110   0.2710</span>
+<span class="r-cm">#&gt; NPK-Mixed       -0.48  -0.9710   0.0110   0.0566</span>
+<span class="r-cm">#&gt; Urea-Mixed      -1.20  -1.6910  -0.7090   0.0000</span>
+<span class="r-cm">#&gt; Urea-NPK        -0.72  -1.2110  -0.2290   0.0034</span></code></pre>
+
+        <h3>Reading the output</h3>
+        <ul>
+          <li><code>diff</code>: difference in sample means, the second group minus the first.</li>
+          <li><code>lwr</code> and <code>upr</code>: 95% family wise CI for the true difference.</li>
+          <li><code>p adj</code>: Tukey adjusted p value. If &lt; 0.05, the pair is significantly different at the 5% family wise level.</li>
+        </ul>
+
+        <table class="data-table compact">
+          <thead><tr><th>Pair</th><th class="num">Difference</th><th>Conclusion at &alpha; = 0.05</th></tr></thead>
+          <tbody>
+            <tr><td>Mixed vs Compost</td><td class="num">1.52</td><td>Significantly different</td></tr>
+            <tr><td>NPK vs Compost</td><td class="num">1.04</td><td>Significantly different</td></tr>
+            <tr><td>Urea vs Compost</td><td class="num">0.32</td><td>Not significant</td></tr>
+            <tr><td>NPK vs Mixed</td><td class="num">−0.48</td><td>Borderline, p = 0.057, not quite</td></tr>
+            <tr><td>Urea vs Mixed</td><td class="num">−1.20</td><td>Significantly different</td></tr>
+            <tr><td>Urea vs NPK</td><td class="num">−0.72</td><td>Significantly different</td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>Practical takeaway.</strong> Mixed and NPK both clearly outperform Compost and Urea. The difference between Mixed and NPK is not quite significant at 5% (p = 0.057). For the next planting season, BARI could recommend either Mixed or NPK with confidence, and avoid Compost.
+        </div>
+
+        <div class="practice" data-q="s8">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">Why is the Tukey HSD critical value larger than the one at a time t critical value?</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">Tukey uses a different sample standard deviation</button>
+            <button class="practice-btn" data-correct="true">It controls the family wise error rate across all pairwise comparisons</button>
+            <button class="practice-btn" data-correct="false">It uses a one sided test instead of two sided</button>
+            <button class="practice-btn" data-correct="false">It uses df = a − 1 instead of N − a</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: Recap -->
+      <div class="slide" data-slide="9">
+        <h2>Recap</h2>
+        <p class="slide-subtitle">From raw treatment data to fully justified conclusions in eight R idioms.</p>
+
+        <h3>The recipe card</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Step</th><th>R recipe</th></tr></thead>
+          <tbody>
+            <tr><td>Build the data frame</td><td><code>data.frame(treat = factor(...), y = ...)</code></td></tr>
+            <tr><td>Visualise</td><td><code>boxplot(y ~ treat, data = df)</code></td></tr>
+            <tr><td>Treatment means</td><td><code>tapply(y, treat, mean)</code></td></tr>
+            <tr><td>Fit the ANOVA</td><td><code>model &lt;- aov(y ~ treat, data = df)</code></td></tr>
+            <tr><td>F test and ANOVA table</td><td><code>summary(model)</code></td></tr>
+            <tr><td>Normality, equal variance, independence</td><td><code>qqnorm(residuals(model)); plot(fitted(model), residuals(model))</code></td></tr>
+            <tr><td>One at a time CI</td><td><code>mean ± qt(0.975, df_error) * sqrt(MSE / n)</code></td></tr>
+            <tr><td>Bonferroni simultaneous CI</td><td><code>qt(1 − α / (2 r), df_error)</code> as the multiplier</td></tr>
+            <tr><td>Pairwise comparison</td><td><code>TukeyHSD(model)</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Before next class</h3>
+        <ol>
+          <li>Take the <strong>Quiz</strong> to lock in the ANOVA table structure, assumption checks, and the difference between one at a time and Bonferroni intervals.</li>
+          <li>Flip the <strong>Flashcards</strong> until the model equation, the three assumptions, and the Tukey logic feel automatic.</li>
+          <li>Work through the <strong>Exercises</strong> on a shrimp feed CRD trial, end to end.</li>
+        </ol>
+
+        <div class="example-box">
+          <strong>Next module (Module 6):</strong> Randomized Complete Block Design (RCBD). What if our experimental units are <em>not</em> homogeneous? We add one nuisance factor as a block, and the same ANOVA logic extends naturally.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ TAB ============ -->
+<section id="quiz" class="tab-content">
+  <div class="quiz-intro">
+    <h2>📝 Quiz Time</h2>
+    <p>10 questions on the CRD model, ANOVA, model adequacy, and post hoc comparisons.</p>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="quiz-footer">
+    <span class="quiz-progress-text" id="quizProgText">0 of 10 answered</span>
+    <button class="btn btn-primary" id="submitQuiz" disabled>Submit Answers</button>
+  </div>
+
+  <div class="quiz-result" id="quizResult">
+    <div class="verdict" id="quizVerdict">Great work!</div>
+    <h3>Your Score</h3>
+    <div class="score"><span id="scoreNum">0</span><span class="total">/10</span></div>
+    <p id="quizMessage">You have completed the Module 5 quiz.</p>
+    <button class="btn btn-ghost" id="retakeQuiz">↺ Retake Quiz</button>
+  </div>
+</section>
+
+<!-- ============ FLASHCARDS TAB ============ -->
+<section id="flashcards" class="tab-content">
+  <div class="flashcards-header">
+    <h2>🃏 Key Terms, Flashcards</h2>
+    <p>Click any card to flip it and see the definition.</p>
+  </div>
+  <div class="flashcards-grid" id="flashcardsGrid"></div>
+</section>
+
+<!-- ============ EXERCISES TAB ============ -->
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Satkhira shrimp feed trial 2024 (illustrative)</h2>
+    <p>A coastal aquaculture CRD with 4 feed formulations and 4 pond replicates each. The dataset is at the top of Exercise 1. Reuse it through the set.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 5">↺ Reset Progress</button>
+
+<script>
+/* ================================================================
+   MODULE 5, COMPLETELY RANDOMIZED DESIGN IN R
+   ================================================================ */
+
+const STORAGE_KEY = 'statcomp1-module5-progress-v1';
+
+const state = {
+  currentSlide: 1,
+  totalSlides: 9,
+  maxSlideReached: 1,
+  quizAnswers: {},
+  quizScore: null,
+  quizSubmitted: false,
+  flashcardsFlipped: new Set(),
+  exercisesOpened: new Set(),
+  exerciseAnswers: {},
+  practiceAnswers: {}
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      flashcardsFlipped: [...state.flashcardsFlipped],
+      exercisesOpened: [...state.exercisesOpened]
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => {
+  if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1);
+});
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct
+        ? '✓ Correct!'
+        : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const quizData = [
+  {
+    q: "What is the defining feature of a Completely Randomized Design?",
+    options: [
+      "Treatments are arranged in a grid with rows and columns as blocking",
+      "Experimental units are essentially homogeneous and treatments are assigned completely at random",
+      "Each treatment is replicated exactly twice",
+      "The response is binary"
+    ],
+    answer: 1,
+    explain: "CRD is the simplest design: homogeneous units, treatments randomly assigned to them, no blocking. If units differ systematically, a blocked design (Module 6) is more appropriate."
+  },
+  {
+    q: "In the CRD model y_ij = μ + τ_i + ε_ij, what does τ_i represent?",
+    options: [
+      "The total sum of squares",
+      "The overall grand mean",
+      "The effect of the ith treatment as a deviation from the overall mean",
+      "The error term for observation j"
+    ],
+    answer: 2,
+    explain: "τ_i is the treatment effect, the systematic shift in the mean response under treatment i. The null hypothesis sets all τ_i equal to zero."
+  },
+  {
+    q: "What does H0 state in a CRD F test?",
+    options: [
+      "All τ_i are non zero",
+      "All τ_i are equal to zero (all treatment means are equal)",
+      "The error variance σ² equals zero",
+      "The treatments have unequal variances"
+    ],
+    answer: 1,
+    explain: "H0: τ_1 = τ_2 = ... = τ_a = 0, i.e. no treatment effect. H1 says at least one τ_i is non zero, i.e. at least one mean differs."
+  },
+  {
+    q: "In a CRD with a = 4 treatments and n = 6 replicates each, the error degrees of freedom equal:",
+    options: [
+      "3",
+      "4",
+      "20",
+      "23"
+    ],
+    answer: 2,
+    explain: "df_error = N − a = 24 − 4 = 20. Treatment df is a − 1 = 3. Total df is N − 1 = 23."
+  },
+  {
+    q: "The F statistic for the CRD is computed as:",
+    options: [
+      "MS_treat / MS_error",
+      "SS_treat / SS_error",
+      "MS_error / MS_treat",
+      "(N − a) / (a − 1)"
+    ],
+    answer: 0,
+    explain: "F = MS_treat / MSE. Under H0, both mean squares estimate σ², so F is near 1. A large F indicates the treatment mean square is much bigger than the error mean square."
+  },
+  {
+    q: "Which plot would you use to check the equal variance assumption?",
+    options: [
+      "QQ plot of residuals against normal quantiles",
+      "Residuals vs fitted values",
+      "Histogram of the response",
+      "Boxplot of the treatments"
+    ],
+    answer: 1,
+    explain: "Residuals vs fitted should show a horizontal band of roughly equal spread across all fitted values. A funnel shape indicates unequal variances (heteroscedasticity)."
+  },
+  {
+    q: "Which assumption is checked with a QQ plot of residuals?",
+    options: [
+      "Equal variance",
+      "Normality of errors",
+      "Independence",
+      "Linearity"
+    ],
+    answer: 1,
+    explain: "A QQ plot compares the residuals' empirical quantiles against theoretical normal quantiles. Points close to the diagonal support the Normality assumption."
+  },
+  {
+    q: "Why does the Bonferroni correction use t at α/(2r), not α/2?",
+    options: [
+      "To make the intervals tighter",
+      "To control the family wise error rate across r simultaneous intervals",
+      "To increase the degrees of freedom",
+      "Because Bonferroni intervals use one sided tests"
+    ],
+    answer: 1,
+    explain: "When we build r intervals at once, the per interval α has to shrink to α/r so the overall (family wise) error rate stays at α. Hence the multiplier is t at α/(2r), which is larger than t at α/2."
+  },
+  {
+    q: "TukeyHSD adjusted p values control which type of error rate?",
+    options: [
+      "Per comparison error rate",
+      "Family wise error rate across all pairwise comparisons",
+      "False discovery rate",
+      "Type II error rate"
+    ],
+    answer: 1,
+    explain: "Tukey HSD is designed for pairwise comparisons of means. Its adjusted p values keep the overall (family wise) probability of making at least one false rejection at the chosen α."
+  },
+  {
+    q: "In R, which call fits a CRD model to a data frame df with response y and treatment column treat?",
+    options: [
+      "aov(treat ~ y, data = df)",
+      "lm(treat ~ y, data = df)",
+      "aov(y ~ treat, data = df)",
+      "glm(y ~ treat, family = poisson, data = df)"
+    ],
+    answer: 2,
+    explain: "aov(y ~ treat, data = df) is the standard CRD fit. The response is on the left of ~, the categorical treatment factor on the right."
+  }
+];
+
+const quizContainer = document.getElementById('quizContainer');
+function renderQuiz() {
+  quizContainer.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `
+      <h4><span class="q-num">Q${i + 1}.</span>${q.q}</h4>
+      <div class="quiz-options" data-qi="${i}">
+        ${q.options.map((opt, j) => `<button class="quiz-option" data-choice="${j}">${opt}</button>`).join('')}
+      </div>
+      <div class="quiz-explain"><strong>Explanation:</strong> ${q.explain}</div>
+    `;
+    quizContainer.appendChild(div);
+  });
+  bindQuiz();
+  restoreQuizState();
+}
+function bindQuiz() {
+  quizContainer.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.quizSubmitted) return;
+      const parent = btn.parentElement;
+      const qi = +parent.dataset.qi;
+      parent.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.quizAnswers[qi] = +btn.dataset.choice;
+      updateQuizProgress();
+      saveState();
+    });
+  });
+}
+function updateQuizProgress() {
+  const answered = Object.keys(state.quizAnswers).length;
+  document.getElementById('quizProgText').textContent = `${answered} of ${quizData.length} answered`;
+  document.getElementById('submitQuiz').disabled = answered !== quizData.length || state.quizSubmitted;
+}
+function restoreQuizState() {
+  Object.entries(state.quizAnswers).forEach(([qi, choice]) => {
+    const opts = quizContainer.querySelector(`[data-qi="${qi}"]`);
+    if (!opts) return;
+    const btn = opts.querySelector(`[data-choice="${choice}"]`);
+    if (btn) btn.classList.add('selected');
+  });
+  if (state.quizSubmitted) revealQuizResults();
+  updateQuizProgress();
+}
+function revealQuizResults() {
+  let score = 0;
+  quizData.forEach((q, i) => {
+    const opts = quizContainer.querySelector(`[data-qi="${i}"]`);
+    if (!opts) return;
+    const chosen = state.quizAnswers[i];
+    opts.querySelectorAll('.quiz-option').forEach(b => {
+      b.classList.add('disabled');
+      const c = +b.dataset.choice;
+      if (c === q.answer) b.classList.add('correct');
+      else if (c === chosen) b.classList.add('wrong');
+    });
+    opts.parentElement.querySelector('.quiz-explain').classList.add('show');
+    if (chosen === q.answer) score++;
+  });
+  state.quizScore = score;
+  document.getElementById('scoreNum').textContent = score;
+  const msg = document.getElementById('quizMessage');
+  const verdict = document.getElementById('quizVerdict');
+  const pct = score / quizData.length;
+  if (pct >= 0.85) {
+    verdict.className = 'verdict great';
+    verdict.textContent = '🏆 Excellent!';
+    msg.textContent = "CRD analysis end to end is in your R toolkit.";
+  } else if (pct >= 0.6) {
+    verdict.className = 'verdict good';
+    verdict.textContent = '👍 Good work';
+    msg.textContent = "Solid. Review the wrong ones and try again if you'd like.";
+  } else {
+    verdict.className = 'verdict ok';
+    verdict.textContent = 'Keep going 💪';
+    msg.textContent = "Review the slides and flashcards, then retake.";
+  }
+  document.getElementById('quizResult').classList.add('show');
+  document.getElementById('submitQuiz').disabled = true;
+}
+document.getElementById('submitQuiz').addEventListener('click', () => {
+  state.quizSubmitted = true;
+  revealQuizResults();
+  updateStats();
+  saveState();
+});
+document.getElementById('retakeQuiz').addEventListener('click', () => {
+  state.quizAnswers = {};
+  state.quizScore = null;
+  state.quizSubmitted = false;
+  document.getElementById('quizResult').classList.remove('show');
+  renderQuiz();
+  updateQuizProgress();
+  updateStats();
+  saveState();
+});
+
+const flashcards = [
+  { term: "Completely Randomized Design (CRD)", def: "The simplest experimental design. Homogeneous experimental units are assigned to treatments completely at random, with no blocking factor." },
+  { term: "Linear additive model", def: "y_ij = μ + τ_i + ε_ij. Each observation is the grand mean plus treatment effect plus iid Normal random error." },
+  { term: "Null hypothesis in CRD", def: "H0: τ_1 = τ_2 = ... = τ_a = 0. All treatment means are equal. The F test of the ANOVA evaluates this." },
+  { term: "Correction Factor CF", def: "CF = G² / N where G is the grand total and N is total observations. Subtracted from sums of squares to centre them at zero." },
+  { term: "Total Sum of Squares", def: "SST = Σ y² − CF. Measures the total variability of the response around the grand mean." },
+  { term: "Treatment Sum of Squares", def: "SS_treat = Σ T_i² / n − CF. The portion of SST explained by differences between treatment means." },
+  { term: "Error Sum of Squares", def: "SSE = SST − SS_treat. Variability within treatments, attributed to random error." },
+  { term: "Degrees of freedom", def: "df_treat = a − 1, df_error = N − a, df_total = N − 1. They sum to df_total: (a−1) + (N−a) = N−1." },
+  { term: "F statistic", def: "F = MS_treat / MSE. Under H0, F follows an F(a−1, N−a) distribution. Large F is evidence against H0." },
+  { term: "Model adequacy: three checks", def: "Normality (QQ plot of residuals), Equal variance (residuals vs fitted), Independence (residuals in run order). All three must hold for the F test to be valid." },
+  { term: "One at a time CI", def: "ȳ_i ± t(α/2, N−a) × √(MSE/n). Covers a single treatment mean with confidence 1 − α. Multiple intervals jointly cover with lower probability." },
+  { term: "Bonferroni simultaneous CI", def: "Replace α with α/r (where r is the number of intervals) in the t multiplier. Family wise coverage is at least 1 − α." },
+  { term: "Tukey HSD", def: "HSD = q(α, a, N−a) × √(MSE/n). Pairwise comparison procedure that controls the family wise error rate. R: TukeyHSD(model)." },
+  { term: "Family wise error rate", def: "Probability of making at least one Type I error across a family of tests. Bonferroni and Tukey HSD are designed to control this rate at α." }
+];
+const fcGrid = document.getElementById('flashcardsGrid');
+flashcards.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'flashcard';
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="flashcard-inner">
+      <div class="flashcard-front">
+        ${c.term}
+        <span class="hint">click to flip</span>
+      </div>
+      <div class="flashcard-back">${c.def}</div>
+    </div>
+  `;
+  card.addEventListener('click', () => {
+    card.classList.toggle('flipped');
+    if (card.classList.contains('flipped')) state.flashcardsFlipped.add(i);
+    updateStats();
+    saveState();
+  });
+  fcGrid.appendChild(card);
+});
+function restoreFlashcards() {
+  fcGrid.querySelectorAll('.flashcard').forEach(c => {
+    if (state.flashcardsFlipped.has(+c.dataset.idx)) c.classList.add('flipped');
+  });
+}
+
+const exercises = [
+  {
+    title: "1. Build the shrimp feed data frame and visualise",
+    diff: "easy",
+    prompt: "A Satkhira shrimp farmer tested 4 feed formulations (F1, F2, F3, F4) on weekly weight gain (grams), with 4 pond replicates per feed. Type the data into R as a data frame <code>shr</code> with <code>treat</code> as a factor, and draw a boxplot of <code>gain</code> by <code>treat</code>.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>treat: F1 F1 F1 F1 F2 F2 F2 F2 F3 F3 F3 F3 F4 F4 F4 F4\ngain:  18.4 19.2 17.8 18.6 22.3 21.5 22.8 22.0 16.5 17.2 16.8 17.5 24.1 23.5 24.6 23.8</code>",
+    hint: "Use rep() or c() to build the treat vector. Convert to factor inside data.frame(). boxplot(gain ~ treat, data = shr).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>treat &lt;- rep(c(\"F1\",\"F2\",\"F3\",\"F4\"), each = 4)\ngain  &lt;- c(18.4, 19.2, 17.8, 18.6,\n           22.3, 21.5, 22.8, 22.0,\n           16.5, 17.2, 16.8, 17.5,\n           24.1, 23.5, 24.6, 23.8)\nshr   &lt;- data.frame(treat = factor(treat), gain)\n\nboxplot(gain ~ treat, data = shr,\n        col = \"#dbeafe\", border = \"#2563eb\",\n        xlab = \"Feed\", ylab = \"Weekly gain (g)\",\n        main = \"Satkhira shrimp feed trial\")</pre>"
+  },
+  {
+    title: "2. Manual ANOVA for the shrimp feed trial",
+    diff: "easy",
+    prompt: "Compute the full ANOVA table by hand using R arithmetic: CF, SST, SS_treat, SSE, the degrees of freedom, mean squares, and the F statistic. Round to three decimals.",
+    hint: "a = 4, n = 4, N = 16. Use tapply(shr$gain, shr$treat, sum) for the treatment totals.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>a &lt;- 4; n &lt;- 4; N &lt;- a * n\nCF &lt;- sum(shr$gain)^2 / N\nSST &lt;- sum(shr$gain^2) - CF\n\ntreat_sum &lt;- tapply(shr$gain, shr$treat, sum)\nSS_treat &lt;- sum(treat_sum^2) / n - CF\nSSE &lt;- SST - SS_treat\n\ndf_treat &lt;- a - 1   # 3\ndf_error &lt;- N - a   # 12\nMS_treat &lt;- SS_treat / df_treat\nMSE      &lt;- SSE / df_error\nF_calc   &lt;- MS_treat / MSE\n\nc(SS_treat = SS_treat, SSE = SSE,\n        MS_treat = MS_treat, MSE = MSE,\n        F_calc = F_calc)\n# SS_treat   SSE  MS_treat  MSE  F_calc\n# 124.768  3.130   41.589  0.261  159.4</pre>"
+  },
+  {
+    title: "3. Same analysis with aov() and read the p value",
+    diff: "easy",
+    prompt: "Fit the model with <code>aov()</code> and print the summary. Report the F statistic, the p value, and your conclusion at &alpha; = 0.05.",
+    hint: "model <- aov(gain ~ treat, data = shr); summary(model).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>model &lt;- aov(gain ~ treat, data = shr)\nsummary(model)\n#             Df Sum Sq Mean Sq F value   Pr(>F)\n# treat        3 124.77  41.589   159.5 1.32e-09 ***\n# Residuals   12   3.13   0.261\n\n# F = 159.5, p < 0.001. Reject H0 at alpha = 0.05.\n# Feed formulation has a significant effect on weekly weight gain.</pre>"
+  },
+  {
+    title: "4. Check normality with a QQ plot",
+    diff: "med",
+    prompt: "Extract the residuals from the model and draw a Normal QQ plot. Comment in one sentence on whether the Normality assumption looks reasonable.",
+    hint: "res <- residuals(model); qqnorm(res); qqline(res).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>res &lt;- residuals(model)\n\nqqnorm(res, pch = 19, col = \"#2563eb\",\n       main = \"QQ plot of residuals\")\nqqline(res, col = \"#dc2626\", lwd = 2)\n\n# If most points sit close to the line and only the tails wander,\n# normality is supported and the F test is reliable.</pre>"
+  },
+  {
+    title: "5. Residuals vs fitted, for equal variance",
+    diff: "med",
+    prompt: "Plot residuals against fitted values, with a horizontal reference line at zero. Comment in one sentence on whether the equal variance assumption looks reasonable.",
+    hint: "plot(fitted(model), residuals(model), ...); abline(h = 0, lty = 2).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>plot(fitted(model), residuals(model),\n     pch = 19, col = \"#2563eb\",\n     xlab = \"Fitted values\", ylab = \"Residuals\",\n     main = \"Residuals vs Fitted\")\nabline(h = 0, lty = 2, col = \"#dc2626\")\n\n# Look for a flat, equal width band of points across the fitted range.\n# A funnel shape would point to unequal variances and a possible\n# log or square root transformation of gain.</pre>"
+  },
+  {
+    title: "6. Bonferroni 95% simultaneous CIs for all feed means",
+    diff: "med",
+    prompt: "Build 95% Bonferroni simultaneous confidence intervals for all four feed means. Return a data frame with columns <code>treat</code>, <code>mean</code>, <code>lower</code>, <code>upper</code>, rounded to three decimals.",
+    hint: "tcrit_bonf <- qt(1 - 0.05 / (2 * r), df_error) with r = a. CI = mean ± tcrit_bonf * sqrt(MSE / n).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>r          &lt;- a\nse         &lt;- sqrt(MSE / n)\ntcrit_bonf &lt;- qt(1 - 0.05 / (2 * r), df_error)   # ~3.153\nmeans      &lt;- tapply(shr$gain, shr$treat, mean)\n\nbonf_ci &lt;- data.frame(\n  treat = names(means),\n  mean  = means,\n  lower = means - tcrit_bonf * se,\n  upper = means + tcrit_bonf * se\n)\nbonf_ci\n#    treat   mean  lower  upper\n# F1    F1 18.500 16.890 20.110\n# F2    F2 22.150 20.540 23.760\n# F3    F3 17.000 15.390 18.610\n# F4    F4 24.000 22.390 25.610\n\n# F2 and F4 intervals are clearly above F1 and F3.\n# F1 vs F3 intervals overlap, so the difference is not\n# clearly distinguishable at family wise 95%.</pre>"
+  },
+  {
+    title: "7. Tukey HSD, which feeds differ?",
+    diff: "hard",
+    prompt: "Run <code>TukeyHSD()</code> on the model. Report which pairs are significantly different at &alpha; = 0.05 family wise, and recommend the best feed for the farmer.",
+    hint: "TukeyHSD(model, conf.level = 0.95). Look at the p adj column, anything below 0.05 is significant.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>TukeyHSD(model, conf.level = 0.95)\n# All pairs except F1 vs F3 will come out p adj &lt; 0.05.\n#\n# Mean weekly gain:\n#   F4 = 24.00 (highest)\n#   F2 = 22.15\n#   F1 = 18.50\n#   F3 = 17.00 (lowest)\n#\n# Recommendation: F4. It is significantly higher than every\n# other feed at the 5% family wise level, with a gap of\n# about 1.85 g over F2 and roughly 5 to 7 g over F1 and F3.</pre>"
+  }
+];
+
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <div class="exercise-head">
+      <h4>${ex.title}</h4>
+      <span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span>
+    </div>
+    <div class="exercise-prompt">${ex.prompt}</div>
+    <textarea placeholder="Write your R code here..." data-ex="${i}"></textarea>
+    <div class="exercise-actions">
+      <button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button>
+      <button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button>
+      <span class="save-indicator" data-ex="${i}"></span>
+    </div>
+    <div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div>
+    <div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>
+  `;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('quizStat').textContent = state.quizScore === null ? '—' : `${state.quizScore}/${quizData.length}`;
+  document.getElementById('flipStat').textContent = state.flashcardsFlipped.size;
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 5? Your slide position, quiz score, flashcards, and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+loadState();
+renderQuiz();
+restoreFlashcards();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>
