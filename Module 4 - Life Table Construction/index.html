@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 4: Life Table Construction</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+table.data-table.compact th, table.data-table.compact td { padding: 6px 9px; font-size: 12px; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+.quiz-intro { background: white; padding: 22px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.quiz-intro h2 { color: var(--primary-dark); margin-bottom: 8px; }
+.quiz-intro p { color: var(--muted); margin-bottom: 14px; }
+.quiz-question { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.quiz-question h4 { font-size: 16px; margin-bottom: 14px; color: var(--text); font-weight: 600; }
+.quiz-question .q-num { color: var(--primary); font-weight: 700; margin-right: 8px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { padding: 11px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: white; transition: all var(--transition); font-size: 14px; color: var(--text); text-align: left; font-family: inherit; }
+.quiz-option:hover { border-color: var(--primary); background: var(--primary-light); transform: translateX(2px); }
+.quiz-option.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 500; }
+.quiz-option.correct { border-color: var(--success); background: var(--success-light); color: var(--success); font-weight: 600; }
+.quiz-option.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+.quiz-option.disabled { pointer-events: none; }
+.quiz-explain { display: none; margin-top: 10px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid var(--primary); border-radius: 4px; font-size: 13px; color: #334155; }
+.quiz-explain.show { display: block; }
+.quiz-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); flex-wrap: wrap; }
+.quiz-progress-text { font-size: 13px; color: var(--muted); }
+.quiz-result { display: none; padding: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%); border-radius: var(--radius); text-align: center; margin-top: 16px; box-shadow: var(--shadow); animation: fadeIn 0.4s ease; }
+.quiz-result.show { display: block; }
+.quiz-result h3 { font-size: 24px; margin-bottom: 10px; color: var(--primary-dark); }
+.quiz-result .score { font-size: 48px; font-weight: 700; color: var(--primary); margin: 14px 0; line-height: 1; }
+.quiz-result .score .total { font-size: 26px; color: var(--muted); }
+.quiz-result p { color: #334155; margin-bottom: 16px; font-size: 15px; }
+.quiz-result .verdict { display: inline-block; padding: 6px 14px; border-radius: 16px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.quiz-result .verdict.great { background: var(--success-light); color: var(--success); }
+.quiz-result .verdict.good { background: var(--primary-light); color: var(--primary-dark); }
+.quiz-result .verdict.ok { background: var(--warning-light); color: var(--warning); }
+
+.flashcards-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; text-align: center; }
+.flashcards-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.flashcards-header p { color: var(--muted); font-size: 14px; }
+.flashcards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.flashcard { perspective: 1000px; height: 200px; cursor: pointer; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.55s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: var(--shadow); }
+.flashcard-front { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid var(--primary-light); color: var(--primary-dark); font-weight: 600; font-size: 17px; }
+.flashcard-front .hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 8px; font-style: italic; }
+.flashcard-back { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; transform: rotateY(180deg); font-size: 13px; line-height: 1.5; }
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.chart-svg { display: block; margin: 14px auto; max-width: 100%; height: auto; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ HEADER ============ -->
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 4</span>
+  <h1>Life Table Construction in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<!-- ============ STATS ============ -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="quizStat">—</div><div class="stat-label">Quiz Score</div></div>
+  <div class="stat"><div class="stat-value" id="flipStat">0</div><div class="stat-label">Cards Flipped</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<!-- ============ TABS ============ -->
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="quiz">📝 Quiz</button>
+  <button class="tab-btn" data-tab="flashcards">🃏 Flashcards</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+
+<!-- ============ SLIDES TAB ============ -->
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 8</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 4</h2>
+        <p>The life table is the single most powerful summary in demography. It packages mortality, survival, and life expectancy across all ages into one consistent table built from a single input, age specific death rates.</p>
+
+        <h3>What you will be able to do by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li>Tell apart the four types of life tables, <strong>cohort vs period</strong> and <strong>complete vs abridged</strong></li>
+          <li>Compute the probability of dying <strong>nqx</strong> from nMx using the <strong>Fergany method</strong></li>
+          <li>Build the survivors column <strong>lx</strong> from a radix of 100,000 using <code>cumprod()</code></li>
+          <li>Compute <strong>ndx</strong>, <strong>nLx</strong>, and the open interval correction for the last band</li>
+          <li>Build <strong>Tx</strong> with reverse cumulative sums and life expectancy <strong>ex</strong></li>
+          <li>Wrap the whole pipeline into a single R function that returns the full abridged life table</li>
+        </ul>
+        <p style="margin-top: 14px; color: var(--muted); font-size: 14px;">When you are ready, click <strong>Next →</strong> to begin.</p>
+      </div>
+
+      <!-- SLIDE 2: Types and columns -->
+      <div class="slide" data-slide="2">
+        <h2>Types of Life Tables and the Canonical Columns</h2>
+        <p class="slide-subtitle">A life table is a statistical tool that summarises mortality, survival, and life expectancy for a population, age band by age band.</p>
+
+        <h3>Two splits, four flavours</h3>
+        <div class="example-box">
+          <strong>Cohort (Generation) Life Table.</strong> Follows one cohort, all individuals born in the same period, from birth until everyone has died. Accurate but slow; the table for people born in 1950 is only complete around 2050.<br><br>
+          <strong>Period (Current) Life Table.</strong> Uses the age specific mortality rates observed in a single recent period, assuming they remain constant. This is the standard table used in demography because it is timely.
+        </div>
+        <div class="tip-box">
+          <strong>Complete vs Abridged.</strong> A <em>complete</em> life table uses single year age intervals (0, 1, 2, …, 100+). An <em>abridged</em> life table uses wider bands (0 to 4, 5 to 9, …, 85+). We will build an abridged period table, the practical choice for most real datasets.
+        </div>
+
+        <h3>The eight canonical columns</h3>
+        <table class="data-table compact">
+          <thead>
+            <tr><th>Column</th><th>Name</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>x</code></td><td>Age</td><td>Starting age of the interval (0, 5, 10, ...).</td></tr>
+            <tr><td><code>n</code></td><td>Interval width</td><td>Years in the band (5 for an abridged table, with an open last band).</td></tr>
+            <tr><td><code>nMx</code></td><td>Age specific death rate</td><td>Input. Deaths per person year in the interval, often reported per 1,000.</td></tr>
+            <tr><td><code>nqx</code></td><td>Probability of dying</td><td>Chance a person alive at age x dies before age x+n.</td></tr>
+            <tr><td><code>npx</code></td><td>Probability of surviving</td><td>1 − nqx. The complement.</td></tr>
+            <tr><td><code>lx</code></td><td>Survivors at exact age x</td><td>Number still alive at exact age x out of l0 born. The radix l0 is usually 100,000.</td></tr>
+            <tr><td><code>ndx</code></td><td>Deaths in the interval</td><td>Number who die between x and x+n. ndx = lx × nqx.</td></tr>
+            <tr><td><code>nLx</code></td><td>Person years lived</td><td>Total years lived in the interval by survivors and decedents combined.</td></tr>
+            <tr><td><code>Tx</code></td><td>Cumulative person years</td><td>Sum of nLx from age x onwards. Lives still to be lived from age x.</td></tr>
+            <tr><td><code>ex</code></td><td>Life expectancy at age x</td><td>Average remaining years for a person alive at exact age x. ex = Tx / lx.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warn-box">
+          <strong>Why eight columns?</strong> Each one answers a different question. nqx is "how likely am I to die in the next 5 years?", lx is "how many of us are left?", ex is "how many years can I expect to live?". The next five slides build them one by one.
+        </div>
+      </div>
+
+      <!-- SLIDE 3: Working dataset -->
+      <div class="slide" data-slide="3">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">Dhaka District 2024, illustrative age specific mortality rates.</p>
+
+        <p>The only input we need is a vector of age specific death rates, <code>nMx</code>, one per age band. We will use 10 bands: 9 closed bands of width 5 years, and one open band <code>45+</code>. The radix is the standard <code>l0 = 100,000</code>.</p>
+
+<pre><code><span class="r-cm"># Dhaka District 2024, abridged age specific death rates (per person year)</span>
+age      <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">0</span>, <span class="r-num">5</span>, <span class="r-num">10</span>, <span class="r-num">15</span>, <span class="r-num">20</span>, <span class="r-num">25</span>, <span class="r-num">30</span>, <span class="r-num">35</span>, <span class="r-num">40</span>, <span class="r-num">45</span>)
+n        <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-num">5</span>, <span class="r-kw">NA</span>)   <span class="r-cm"># last band is open</span>
+nMx      <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">0.0060</span>, <span class="r-num">0.0008</span>, <span class="r-num">0.0008</span>,
+            <span class="r-num">0.0012</span>, <span class="r-num">0.0018</span>, <span class="r-num">0.0025</span>,
+            <span class="r-num">0.0035</span>, <span class="r-num">0.0050</span>, <span class="r-num">0.0075</span>,
+            <span class="r-num">0.0300</span>)
+
+lt <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(age, n, nMx)
+
+l0 <span class="r-op">&lt;-</span> <span class="r-num">100000</span>      <span class="r-cm"># standard radix</span></code></pre>
+
+        <h3>What the input looks like</h3>
+        <table class="data-table compact">
+          <thead>
+            <tr><th>Age band</th><th class="num">x</th><th class="num">n</th><th class="num">nMx</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0-4</td><td class="num">0</td><td class="num">5</td><td class="num">0.0060</td></tr>
+            <tr><td>5-9</td><td class="num">5</td><td class="num">5</td><td class="num">0.0008</td></tr>
+            <tr><td>10-14</td><td class="num">10</td><td class="num">5</td><td class="num">0.0008</td></tr>
+            <tr><td>15-19</td><td class="num">15</td><td class="num">5</td><td class="num">0.0012</td></tr>
+            <tr><td>20-24</td><td class="num">20</td><td class="num">5</td><td class="num">0.0018</td></tr>
+            <tr><td>25-29</td><td class="num">25</td><td class="num">5</td><td class="num">0.0025</td></tr>
+            <tr><td>30-34</td><td class="num">30</td><td class="num">5</td><td class="num">0.0035</td></tr>
+            <tr><td>35-39</td><td class="num">35</td><td class="num">5</td><td class="num">0.0050</td></tr>
+            <tr><td>40-44</td><td class="num">40</td><td class="num">5</td><td class="num">0.0075</td></tr>
+            <tr><td>45+</td><td class="num">45</td><td class="num">open</td><td class="num">0.0300</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>Why an open last interval?</strong> Mortality at very old ages is too volatile to band finely. The open interval absorbs every survivor from age 45 onwards. It needs special treatment for nqx (always 1) and nLx (lx / nMx), as we will see on Slides 4 and 6.
+        </div>
+      </div>
+
+      <!-- SLIDE 4: nqx and npx -->
+      <div class="slide" data-slide="4">
+        <h2>Probabilities of Dying and Surviving</h2>
+        <p>The first computed column is <code>nqx</code>, the probability that a person alive at exact age x dies before reaching x+n. From mortality rates to probabilities, the <strong>Fergany method</strong> gives a clean exponential transform.</p>
+
+        <div class="formula-box">
+          nqx &nbsp;=&nbsp; 1 &nbsp;&minus;&nbsp; e<sup>&minus;n &times; nMx</sup>
+        </div>
+        <p>For the open last interval, <code>nqx = 1</code> by construction, because everyone in the interval will eventually die in it.</p>
+
+        <h3>Compute nqx and npx in R</h3>
+<pre><code><span class="r-cm"># Fergany method for the closed bands</span>
+lt<span class="r-op">$</span>nqx <span class="r-op">&lt;-</span> <span class="r-num">1</span> <span class="r-op">-</span> <span class="r-func">exp</span>(<span class="r-op">-</span>lt<span class="r-op">$</span>n <span class="r-op">*</span> lt<span class="r-op">$</span>nMx)
+
+<span class="r-cm"># Override the open last band</span>
+last <span class="r-op">&lt;-</span> <span class="r-func">nrow</span>(lt)
+lt<span class="r-op">$</span>nqx[last] <span class="r-op">&lt;-</span> <span class="r-num">1</span>
+
+<span class="r-cm"># Survival probability is just the complement</span>
+lt<span class="r-op">$</span>npx <span class="r-op">&lt;-</span> <span class="r-num">1</span> <span class="r-op">-</span> lt<span class="r-op">$</span>nqx
+
+lt[, <span class="r-func">c</span>(<span class="r-str">"age"</span>, <span class="r-str">"nMx"</span>, <span class="r-str">"nqx"</span>, <span class="r-str">"npx"</span>)]
+<span class="r-cm">#&gt;    age    nMx     nqx     npx</span>
+<span class="r-cm">#&gt; 1    0 0.0060 0.02955 0.97045</span>
+<span class="r-cm">#&gt; 2    5 0.0008 0.00399 0.99601</span>
+<span class="r-cm">#&gt; 3   10 0.0008 0.00399 0.99601</span>
+<span class="r-cm">#&gt; 4   15 0.0012 0.00598 0.99402</span>
+<span class="r-cm">#&gt; 5   20 0.0018 0.00896 0.99104</span>
+<span class="r-cm">#&gt; 6   25 0.0025 0.01242 0.98758</span>
+<span class="r-cm">#&gt; 7   30 0.0035 0.01735 0.98265</span>
+<span class="r-cm">#&gt; 8   35 0.0050 0.02469 0.97531</span>
+<span class="r-cm">#&gt; 9   40 0.0075 0.03681 0.96319</span>
+<span class="r-cm">#&gt; 10  45 0.0300 1.00000 0.00000</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read nqx = 0.02955 for ages 0 to 4:</strong> a child born today has about a 2.96% chance of dying before age 5, under the 2024 mortality regime. The figure climbs to 3.68% in the 40 to 44 band, and the open 45+ band absorbs everyone who survives that far.
+        </div>
+
+        <div class="practice" data-q="s4">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">If nMx for an age band were exactly zero (no deaths), what would the Fergany formula return for nqx?</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">nqx = 1, by convention for open intervals</button>
+            <button class="practice-btn" data-correct="true">nqx = 0, no deaths in the band</button>
+            <button class="practice-btn" data-correct="false">nqx is undefined</button>
+            <button class="practice-btn" data-correct="false">nqx = n</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: lx and ndx -->
+      <div class="slide" data-slide="5">
+        <h2>Survivors and Deaths</h2>
+        <p>The survivors column <code>lx</code> tracks how many of the original radix are still alive at each exact age. Starting from <code>l0 = 100,000</code>, each next value is the previous one multiplied by the survival probability.</p>
+
+        <div class="formula-box">
+          l<sub>x+n</sub> &nbsp;=&nbsp; l<sub>x</sub> &nbsp;&times;&nbsp; npx<br>
+          equivalently &nbsp; lx &nbsp;=&nbsp; l<sub>0</sub> &nbsp;&times;&nbsp; npx<sub>0</sub> &nbsp;&times;&nbsp; npx<sub>1</sub> &nbsp;&times;&nbsp; &hellip; &nbsp;&times;&nbsp; npx<sub>x&minus;n</sub>
+        </div>
+
+        <h3>Build lx with cumprod()</h3>
+        <p>Vectorise it: the chain of products is exactly what <code>cumprod()</code> computes.</p>
+<pre><code><span class="r-cm"># Chain of survival probabilities, starting from l0</span>
+lt<span class="r-op">$</span>lx <span class="r-op">&lt;-</span> l0 <span class="r-op">*</span> <span class="r-func">cumprod</span>(<span class="r-func">c</span>(<span class="r-num">1</span>, lt<span class="r-op">$</span>npx[<span class="r-op">-</span>last]))
+
+<span class="r-cm"># Deaths in each interval</span>
+lt<span class="r-op">$</span>ndx <span class="r-op">&lt;-</span> lt<span class="r-op">$</span>lx <span class="r-op">*</span> lt<span class="r-op">$</span>nqx
+
+lt[, <span class="r-func">c</span>(<span class="r-str">"age"</span>, <span class="r-str">"lx"</span>, <span class="r-str">"ndx"</span>)]
+<span class="r-cm">#&gt;    age       lx     ndx</span>
+<span class="r-cm">#&gt; 1    0 100000.00 2955.40</span>
+<span class="r-cm">#&gt; 2    5  97044.60  387.41</span>
+<span class="r-cm">#&gt; 3   10  96657.19  385.86</span>
+<span class="r-cm">#&gt; 4   15  96271.33  575.91</span>
+<span class="r-cm">#&gt; 5   20  95695.42  857.43</span>
+<span class="r-cm">#&gt; 6   25  94837.99 1178.10</span>
+<span class="r-cm">#&gt; 7   30  93659.89 1624.74</span>
+<span class="r-cm">#&gt; 8   35  92035.15 2272.79</span>
+<span class="r-cm">#&gt; 9   40  89762.36 3304.34</span>
+<span class="r-cm">#&gt; 10  45  86458.02 86458.02</span></code></pre>
+
+        <h3>Two sanity checks</h3>
+        <ul>
+          <li><code>sum(lt$ndx)</code> should equal exactly <code>l0 = 100,000</code>. Every birth ends in a death, somewhere in the table.</li>
+          <li><code>lt$lx[last] == lt$ndx[last]</code> in the open interval, because everyone left at age 45 dies in that band.</li>
+        </ul>
+
+<pre><code><span class="r-func">sum</span>(lt<span class="r-op">$</span>ndx)
+<span class="r-cm">#&gt; [1] 1e+05</span>
+
+lt<span class="r-op">$</span>lx[last] <span class="r-op">==</span> lt<span class="r-op">$</span>ndx[last]
+<span class="r-cm">#&gt; [1] TRUE</span></code></pre>
+      </div>
+
+      <!-- SLIDE 6: nLx -->
+      <div class="slide" data-slide="6">
+        <h2>Person Years Lived in Each Interval</h2>
+        <p><code>nLx</code> is the total person years lived by everyone in the age band, survivors and decedents combined. It is the engine that converts numbers of people into life expectancy.</p>
+
+        <h3>Two formulas, one for closed and one for open intervals</h3>
+        <div class="formula-box">
+          <strong>Closed band:</strong> &nbsp; nLx &nbsp;=&nbsp; (n &divide; 2) &nbsp;&times;&nbsp; (lx + lx+n)<br><br>
+          <strong>Open last band:</strong> &nbsp; nLx &nbsp;=&nbsp; lx &divide; nMx
+        </div>
+        <p>The closed formula is the trapezoidal rule: average the survivors at the start and end of the band, then multiply by the band width. The open formula assumes a constant exponential mortality after age 45, so the total years lived equal lx divided by the rate.</p>
+
+        <h3>Build nLx in R</h3>
+<pre><code>lt<span class="r-op">$</span>nLx <span class="r-op">&lt;-</span> <span class="r-func">NA_real_</span>
+
+<span class="r-cm"># Closed bands: trapezoidal average</span>
+<span class="r-kw">for</span> (i <span class="r-kw">in</span> <span class="r-num">1</span><span class="r-op">:</span>(last <span class="r-op">-</span> <span class="r-num">1</span>)) {
+  lt<span class="r-op">$</span>nLx[i] <span class="r-op">&lt;-</span> (lt<span class="r-op">$</span>n[i] <span class="r-op">/</span> <span class="r-num">2</span>) <span class="r-op">*</span> (lt<span class="r-op">$</span>lx[i] <span class="r-op">+</span> lt<span class="r-op">$</span>lx[i <span class="r-op">+</span> <span class="r-num">1</span>])
+}
+
+<span class="r-cm"># Open last band</span>
+lt<span class="r-op">$</span>nLx[last] <span class="r-op">&lt;-</span> lt<span class="r-op">$</span>lx[last] <span class="r-op">/</span> lt<span class="r-op">$</span>nMx[last]
+
+lt[, <span class="r-func">c</span>(<span class="r-str">"age"</span>, <span class="r-str">"lx"</span>, <span class="r-str">"nLx"</span>)]
+<span class="r-cm">#&gt;    age       lx        nLx</span>
+<span class="r-cm">#&gt; 1    0 100000.00  492611.50</span>
+<span class="r-cm">#&gt; 2    5  97044.60  484254.48</span>
+<span class="r-cm">#&gt; 3   10  96657.19  482321.30</span>
+<span class="r-cm">#&gt; 4   15  96271.33  479918.88</span>
+<span class="r-cm">#&gt; 5   20  95695.42  476333.53</span>
+<span class="r-cm">#&gt; 6   25  94837.99  471244.70</span>
+<span class="r-cm">#&gt; 7   30  93659.89  464237.60</span>
+<span class="r-cm">#&gt; 8   35  92035.15  454493.78</span>
+<span class="r-cm">#&gt; 9   40  89762.36  440550.95</span>
+<span class="r-cm">#&gt; 10  45  86458.02 2881934.00</span></code></pre>
+
+        <div class="example-box">
+          <strong>Why is the open nLx so large?</strong> 2.88 million person years for 86,458 survivors works out to about 33 years on average past age 45, which is exactly 1 / nMx = 1 / 0.030. The open interval absorbs all remaining lifetime.
+        </div>
+      </div>
+
+      <!-- SLIDE 7: Tx and ex -->
+      <div class="slide" data-slide="7">
+        <h2>Cumulative Person Years and Life Expectancy</h2>
+        <p><code>Tx</code> totals up the person years still to be lived from age x onwards. <code>ex</code> divides Tx by the survivors at that age, giving average remaining life.</p>
+
+        <div class="formula-box">
+          T<sub>x</sub> &nbsp;=&nbsp; nLx + nLx<sub>+n</sub> + nLx<sub>+2n</sub> + &hellip;<br><br>
+          e<sub>x</sub> &nbsp;=&nbsp; T<sub>x</sub> &divide; l<sub>x</sub>
+        </div>
+
+        <h3>Reverse cumulative sum in R</h3>
+        <p>The natural R idiom is <code>rev(cumsum(rev(x)))</code>: reverse the vector, take a forward cumulative sum, then reverse the result.</p>
+
+<pre><code>lt<span class="r-op">$</span>Tx <span class="r-op">&lt;-</span> <span class="r-func">rev</span>(<span class="r-func">cumsum</span>(<span class="r-func">rev</span>(lt<span class="r-op">$</span>nLx)))
+lt<span class="r-op">$</span>ex <span class="r-op">&lt;-</span> lt<span class="r-op">$</span>Tx <span class="r-op">/</span> lt<span class="r-op">$</span>lx
+
+lt[, <span class="r-func">c</span>(<span class="r-str">"age"</span>, <span class="r-str">"Tx"</span>, <span class="r-str">"ex"</span>)]
+<span class="r-cm">#&gt;    age        Tx     ex</span>
+<span class="r-cm">#&gt; 1    0 7127900.72  71.28</span>
+<span class="r-cm">#&gt; 2    5 6635289.22  68.37</span>
+<span class="r-cm">#&gt; 3   10 6151034.74  63.64</span>
+<span class="r-cm">#&gt; 4   15 5668713.44  58.88</span>
+<span class="r-cm">#&gt; 5   20 5188794.56  54.22</span>
+<span class="r-cm">#&gt; 6   25 4712461.03  49.69</span>
+<span class="r-cm">#&gt; 7   30 4241216.33  45.28</span>
+<span class="r-cm">#&gt; 8   35 3776978.73  41.04</span>
+<span class="r-cm">#&gt; 9   40 3322484.95  37.01</span>
+<span class="r-cm">#&gt; 10  45 2881934.00  33.33</span></code></pre>
+
+        <h3>What the ex curve looks like</h3>
+        <svg class="chart-svg" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Life expectancy curve for Dhaka 2024">
+          <style>
+            .ax { stroke: #475569; stroke-width: 1; }
+            .gr { stroke: #e2e8f0; stroke-width: 1; }
+            .lbl { font: 11px Inter, sans-serif; fill: #475569; }
+            .ttl { font: bold 14px Inter, sans-serif; fill: #1e293b; }
+            .axl { font: 11px Inter, sans-serif; fill: #64748b; }
+            .pt { fill: #2563eb; }
+            .ln { stroke: #2563eb; stroke-width: 2; fill: none; }
+            .vl { font: 11px Inter, sans-serif; fill: #1e293b; font-weight: 600; }
+          </style>
+          <text x="320" y="18" text-anchor="middle" class="ttl">Dhaka 2024, Life Expectancy ex at exact age x</text>
+
+          <!-- Grid lines -->
+          <line x1="80" y1="70" x2="610" y2="70" class="gr"/>
+          <line x1="80" y1="130" x2="610" y2="130" class="gr"/>
+          <line x1="80" y1="190" x2="610" y2="190" class="gr"/>
+          <line x1="80" y1="250" x2="610" y2="250" class="gr"/>
+
+          <!-- Y axis -->
+          <line x1="80" y1="40" x2="80" y2="310" class="ax"/>
+          <text x="72" y="74" text-anchor="end" class="axl">70</text>
+          <text x="72" y="134" text-anchor="end" class="axl">60</text>
+          <text x="72" y="194" text-anchor="end" class="axl">50</text>
+          <text x="72" y="254" text-anchor="end" class="axl">40</text>
+          <text x="72" y="314" text-anchor="end" class="axl">30</text>
+          <text x="32" y="170" text-anchor="middle" class="axl" transform="rotate(-90 32 170)">ex (years)</text>
+
+          <!-- X axis -->
+          <line x1="80" y1="310" x2="610" y2="310" class="ax"/>
+          <text x="100" y="328" text-anchor="middle" class="axl">0</text>
+          <text x="156" y="328" text-anchor="middle" class="axl">5</text>
+          <text x="211" y="328" text-anchor="middle" class="axl">10</text>
+          <text x="267" y="328" text-anchor="middle" class="axl">15</text>
+          <text x="322" y="328" text-anchor="middle" class="axl">20</text>
+          <text x="378" y="328" text-anchor="middle" class="axl">25</text>
+          <text x="433" y="328" text-anchor="middle" class="axl">30</text>
+          <text x="489" y="328" text-anchor="middle" class="axl">35</text>
+          <text x="544" y="328" text-anchor="middle" class="axl">40</text>
+          <text x="600" y="328" text-anchor="middle" class="axl">45</text>
+          <text x="340" y="348" text-anchor="middle" class="axl">Exact age x (years)</text>
+
+          <!-- Polyline through ex values: 71.28, 68.37, 63.64, 58.88, 54.22, 49.69, 45.28, 41.04, 37.01, 33.33 -->
+          <!-- y = 310 - (ex - 30) * 6 -->
+          <!-- 62, 80, 108, 137, 165, 192, 218, 244, 268, 290 -->
+          <polyline class="ln"
+            points="100,62 156,80 211,108 267,137 322,165 378,192 433,218 489,244 544,268 600,290"/>
+
+          <circle cx="100" cy="62" r="5" class="pt"/>
+          <text x="100" y="53" text-anchor="middle" class="vl">71.3</text>
+
+          <circle cx="156" cy="80" r="5" class="pt"/>
+          <text x="156" y="71" text-anchor="middle" class="vl">68.4</text>
+
+          <circle cx="211" cy="108" r="5" class="pt"/>
+          <text x="211" y="99" text-anchor="middle" class="vl">63.6</text>
+
+          <circle cx="267" cy="137" r="5" class="pt"/>
+          <text x="267" y="128" text-anchor="middle" class="vl">58.9</text>
+
+          <circle cx="322" cy="165" r="5" class="pt"/>
+          <text x="322" y="156" text-anchor="middle" class="vl">54.2</text>
+
+          <circle cx="378" cy="192" r="5" class="pt"/>
+          <text x="378" y="183" text-anchor="middle" class="vl">49.7</text>
+
+          <circle cx="433" cy="218" r="5" class="pt"/>
+          <text x="433" y="209" text-anchor="middle" class="vl">45.3</text>
+
+          <circle cx="489" cy="244" r="5" class="pt"/>
+          <text x="489" y="235" text-anchor="middle" class="vl">41.0</text>
+
+          <circle cx="544" cy="268" r="5" class="pt"/>
+          <text x="544" y="259" text-anchor="middle" class="vl">37.0</text>
+
+          <circle cx="600" cy="290" r="5" class="pt"/>
+          <text x="600" y="281" text-anchor="middle" class="vl">33.3</text>
+        </svg>
+
+        <div class="example-box">
+          <strong>How to read it.</strong> Life expectancy at birth is <code>e0 = 71.3 years</code>. A person who has already reached age 25 has about <code>e25 = 49.7</code> more years to live on average, so they are expected to live to about 75. Note this is higher than e0 by about 4 years; survivors past the first few years have already cleared early childhood mortality.
+        </div>
+
+        <div class="practice" data-q="s7">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">In an abridged life table, ex at the open last band equals:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">0, because everyone dies in this band</button>
+            <button class="practice-btn" data-correct="true">1 / nMx for that band</button>
+            <button class="practice-btn" data-correct="false">The width n of the band</button>
+            <button class="practice-btn" data-correct="false">l0 / lx at that age</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Putting it together + recap -->
+      <div class="slide" data-slide="8">
+        <h2>Putting It Together</h2>
+        <p class="slide-subtitle">One R function that turns nMx and band widths into the full abridged life table.</p>
+
+        <h3>The build_life_table() function</h3>
+<pre><code>build_life_table <span class="r-op">&lt;-</span> <span class="r-kw">function</span>(age, n, nMx, l0 <span class="r-op">=</span> <span class="r-num">100000</span>) {
+
+  k <span class="r-op">&lt;-</span> <span class="r-func">length</span>(nMx)
+
+  <span class="r-cm"># Fergany method for nqx, then override the open last band</span>
+  nqx <span class="r-op">&lt;-</span> <span class="r-num">1</span> <span class="r-op">-</span> <span class="r-func">exp</span>(<span class="r-op">-</span>n <span class="r-op">*</span> nMx)
+  nqx[k] <span class="r-op">&lt;-</span> <span class="r-num">1</span>
+  npx <span class="r-op">&lt;-</span> <span class="r-num">1</span> <span class="r-op">-</span> nqx
+
+  <span class="r-cm"># Survivors and deaths</span>
+  lx  <span class="r-op">&lt;-</span> l0 <span class="r-op">*</span> <span class="r-func">cumprod</span>(<span class="r-func">c</span>(<span class="r-num">1</span>, npx[<span class="r-op">-</span>k]))
+  ndx <span class="r-op">&lt;-</span> lx <span class="r-op">*</span> nqx
+
+  <span class="r-cm"># nLx, trapezoidal for closed and lx/nMx for the open band</span>
+  nLx <span class="r-op">&lt;-</span> <span class="r-func">numeric</span>(k)
+  <span class="r-kw">for</span> (i <span class="r-kw">in</span> <span class="r-num">1</span><span class="r-op">:</span>(k <span class="r-op">-</span> <span class="r-num">1</span>)) {
+    nLx[i] <span class="r-op">&lt;-</span> (n[i] <span class="r-op">/</span> <span class="r-num">2</span>) <span class="r-op">*</span> (lx[i] <span class="r-op">+</span> lx[i <span class="r-op">+</span> <span class="r-num">1</span>])
+  }
+  nLx[k] <span class="r-op">&lt;-</span> lx[k] <span class="r-op">/</span> nMx[k]
+
+  <span class="r-cm"># Tx and ex</span>
+  Tx <span class="r-op">&lt;-</span> <span class="r-func">rev</span>(<span class="r-func">cumsum</span>(<span class="r-func">rev</span>(nLx)))
+  ex <span class="r-op">&lt;-</span> Tx <span class="r-op">/</span> lx
+
+  <span class="r-func">data.frame</span>(age, n, nMx, nqx, npx, lx, ndx, nLx, Tx, ex)
+}
+
+<span class="r-cm"># Apply to Dhaka 2024</span>
+dhaka_lt <span class="r-op">&lt;-</span> build_life_table(age, n, nMx)
+dhaka_lt</code></pre>
+
+        <h3>The full Dhaka 2024 abridged life table</h3>
+        <table class="data-table compact">
+          <thead>
+            <tr><th class="num">x</th><th class="num">n</th><th class="num">nMx</th><th class="num">nqx</th><th class="num">lx</th><th class="num">ndx</th><th class="num">nLx</th><th class="num">Tx</th><th class="num">ex</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">0</td><td class="num">5</td><td class="num">0.0060</td><td class="num">0.0296</td><td class="num">100,000</td><td class="num">2,955</td><td class="num">492,612</td><td class="num">7,127,901</td><td class="num">71.28</td></tr>
+            <tr><td class="num">5</td><td class="num">5</td><td class="num">0.0008</td><td class="num">0.0040</td><td class="num">97,045</td><td class="num">387</td><td class="num">484,254</td><td class="num">6,635,289</td><td class="num">68.37</td></tr>
+            <tr><td class="num">10</td><td class="num">5</td><td class="num">0.0008</td><td class="num">0.0040</td><td class="num">96,657</td><td class="num">386</td><td class="num">482,321</td><td class="num">6,151,035</td><td class="num">63.64</td></tr>
+            <tr><td class="num">15</td><td class="num">5</td><td class="num">0.0012</td><td class="num">0.0060</td><td class="num">96,271</td><td class="num">576</td><td class="num">479,919</td><td class="num">5,668,713</td><td class="num">58.88</td></tr>
+            <tr><td class="num">20</td><td class="num">5</td><td class="num">0.0018</td><td class="num">0.0090</td><td class="num">95,695</td><td class="num">857</td><td class="num">476,334</td><td class="num">5,188,795</td><td class="num">54.22</td></tr>
+            <tr><td class="num">25</td><td class="num">5</td><td class="num">0.0025</td><td class="num">0.0124</td><td class="num">94,838</td><td class="num">1,178</td><td class="num">471,245</td><td class="num">4,712,461</td><td class="num">49.69</td></tr>
+            <tr><td class="num">30</td><td class="num">5</td><td class="num">0.0035</td><td class="num">0.0173</td><td class="num">93,660</td><td class="num">1,625</td><td class="num">464,238</td><td class="num">4,241,216</td><td class="num">45.28</td></tr>
+            <tr><td class="num">35</td><td class="num">5</td><td class="num">0.0050</td><td class="num">0.0247</td><td class="num">92,035</td><td class="num">2,273</td><td class="num">454,494</td><td class="num">3,776,979</td><td class="num">41.04</td></tr>
+            <tr><td class="num">40</td><td class="num">5</td><td class="num">0.0075</td><td class="num">0.0368</td><td class="num">89,762</td><td class="num">3,304</td><td class="num">440,551</td><td class="num">3,322,485</td><td class="num">37.01</td></tr>
+            <tr class="hl"><td class="num">45</td><td class="num">open</td><td class="num">0.0300</td><td class="num">1.0000</td><td class="num">86,458</td><td class="num">86,458</td><td class="num">2,881,934</td><td class="num">2,881,934</td><td class="num"><strong>33.33</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Recap, the recipe card</h3>
+        <table class="data-table compact">
+          <thead>
+            <tr><th>Column</th><th>R recipe</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>nqx (Fergany)</td><td><code>1 - exp(-n * nMx)</code>, then <code>nqx[last] = 1</code></td></tr>
+            <tr><td>npx</td><td><code>1 - nqx</code></td></tr>
+            <tr><td>lx</td><td><code>l0 * cumprod(c(1, npx[-last]))</code></td></tr>
+            <tr><td>ndx</td><td><code>lx * nqx</code></td></tr>
+            <tr><td>nLx (closed)</td><td><code>(n/2) * (lx + lx_next)</code></td></tr>
+            <tr><td>nLx (open)</td><td><code>lx[last] / nMx[last]</code></td></tr>
+            <tr><td>Tx</td><td><code>rev(cumsum(rev(nLx)))</code></td></tr>
+            <tr><td>ex</td><td><code>Tx / lx</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>Next module (Module 5):</strong> we move from Demography into Design of Experiments. Block 1 closes here, and the Completely Randomized Design (CRD) opens Block 2.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ TAB ============ -->
+<section id="quiz" class="tab-content">
+  <div class="quiz-intro">
+    <h2>📝 Quiz Time</h2>
+    <p>10 questions on life table types, the Fergany method, and each of the eight columns.</p>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="quiz-footer">
+    <span class="quiz-progress-text" id="quizProgText">0 of 10 answered</span>
+    <button class="btn btn-primary" id="submitQuiz" disabled>Submit Answers</button>
+  </div>
+
+  <div class="quiz-result" id="quizResult">
+    <div class="verdict" id="quizVerdict">Great work!</div>
+    <h3>Your Score</h3>
+    <div class="score"><span id="scoreNum">0</span><span class="total">/10</span></div>
+    <p id="quizMessage">You have completed the Module 4 quiz.</p>
+    <button class="btn btn-ghost" id="retakeQuiz">↺ Retake Quiz</button>
+  </div>
+</section>
+
+<!-- ============ FLASHCARDS TAB ============ -->
+<section id="flashcards" class="tab-content">
+  <div class="flashcards-header">
+    <h2>🃏 Key Terms, Flashcards</h2>
+    <p>Click any card to flip it and see the definition.</p>
+  </div>
+  <div class="flashcards-grid" id="flashcardsGrid"></div>
+</section>
+
+<!-- ============ EXERCISES TAB ============ -->
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Cumilla District 2024 (illustrative)</h2>
+    <p>All exercises use a second district so you apply the same recipes on fresh nMx values. The dataset is given at the top of Exercise 1. Reuse it for the rest.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 4">↺ Reset Progress</button>
+
+<script>
+/* ================================================================
+   MODULE 4, LIFE TABLE CONSTRUCTION IN R
+   ================================================================ */
+
+const STORAGE_KEY = 'statcomp1-module4-progress-v1';
+
+const state = {
+  currentSlide: 1,
+  totalSlides: 8,
+  maxSlideReached: 1,
+  quizAnswers: {},
+  quizScore: null,
+  quizSubmitted: false,
+  flashcardsFlipped: new Set(),
+  exercisesOpened: new Set(),
+  exerciseAnswers: {},
+  practiceAnswers: {}
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ...state,
+      flashcardsFlipped: [...state.flashcardsFlipped],
+      exercisesOpened: [...state.exercisesOpened]
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => {
+  if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1);
+});
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct
+        ? '✓ Correct!'
+        : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const quizData = [
+  {
+    q: "What is a life table?",
+    options: [
+      "A list of every death recorded in a year",
+      "A statistical tool that summarises mortality, survival, and life expectancy across ages",
+      "A census of the elderly population",
+      "A table of fertility rates by mother's age"
+    ],
+    answer: 1,
+    explain: "A life table packages mortality, survival, and life expectancy into one consistent picture, built from a single input vector of age specific death rates."
+  },
+  {
+    q: "Which life table is based on the mortality rates of a single recent period, assuming they remain constant?",
+    options: [
+      "Cohort (Generation) life table",
+      "Period (Current) life table",
+      "Complete life table",
+      "Abridged life table"
+    ],
+    answer: 1,
+    explain: "A Period life table uses current age specific rates as if they applied throughout a synthetic cohort's lifetime. It is the standard practical table in demography."
+  },
+  {
+    q: "An abridged life table differs from a complete life table in that it:",
+    options: [
+      "Omits the oldest ages",
+      "Uses wider age intervals such as 0-4, 5-9, ... instead of single year ages",
+      "Drops the Tx column",
+      "Uses a smaller radix than 100,000"
+    ],
+    answer: 1,
+    explain: "Abridged tables use 5 year (or wider) bands, ending in an open interval. Complete tables use single year ages from 0 to 100+."
+  },
+  {
+    q: "The Fergany method computes nqx as:",
+    options: [
+      "n × nMx",
+      "1 / (1 + n × nMx)",
+      "1 − exp(−n × nMx)",
+      "n × nMx / 2"
+    ],
+    answer: 2,
+    explain: "Fergany applies an exponential transformation: nqx = 1 − exp(−n × nMx). It is the standard approximation taught in Bangladesh demography courses."
+  },
+  {
+    q: "For the open last interval, what value does nqx take by construction?",
+    options: [
+      "0",
+      "1",
+      "1 / nMx",
+      "It depends on the previous lx"
+    ],
+    answer: 1,
+    explain: "Everyone in the open last interval will eventually die in it, so the probability of dying in the interval is exactly 1."
+  },
+  {
+    q: "lx represents:",
+    options: [
+      "Total deaths up to age x",
+      "The number of survivors at exact age x out of l0 born",
+      "Life expectancy at age x",
+      "Person years lived up to age x"
+    ],
+    answer: 1,
+    explain: "lx is the survivors column. Starting from the radix l0 (usually 100,000), each next value is the previous times the survival probability."
+  },
+  {
+    q: "Which R idiom builds lx from npx (with l0 = 100000)?",
+    options: [
+      "cumsum(npx) * 100000",
+      "100000 * cumprod(c(1, npx[-length(npx)]))",
+      "100000 - cumsum(ndx)",
+      "rev(cumsum(rev(npx)))"
+    ],
+    answer: 1,
+    explain: "Each lx is l0 multiplied by the cumulative product of the previous survival probabilities. The c(1, npx[-last]) trick keeps l0 itself at the top."
+  },
+  {
+    q: "For a closed band, nLx is approximated by which formula?",
+    options: [
+      "lx × n",
+      "(n / 2) × (lx + lx+n)",
+      "lx − lx+n",
+      "n × ndx"
+    ],
+    answer: 1,
+    explain: "Trapezoidal: average the survivors at start and end of the band, then multiply by the band width. Decedents are assumed to die on average mid interval."
+  },
+  {
+    q: "For the open last interval, nLx is computed as:",
+    options: [
+      "0",
+      "lx × n",
+      "lx / nMx",
+      "(lx + 0) / 2"
+    ],
+    answer: 2,
+    explain: "Assuming constant exponential mortality from age x onwards, the total person years lived by lx survivors equals lx divided by the mortality rate."
+  },
+  {
+    q: "Life expectancy at exact age x is computed as:",
+    options: [
+      "Tx × lx",
+      "Tx + lx",
+      "Tx / lx",
+      "lx / Tx"
+    ],
+    answer: 2,
+    explain: "ex = Tx / lx. Tx is total future person years for survivors at age x; dividing by lx gives the average remaining years per survivor."
+  }
+];
+
+const quizContainer = document.getElementById('quizContainer');
+function renderQuiz() {
+  quizContainer.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `
+      <h4><span class="q-num">Q${i + 1}.</span>${q.q}</h4>
+      <div class="quiz-options" data-qi="${i}">
+        ${q.options.map((opt, j) => `<button class="quiz-option" data-choice="${j}">${opt}</button>`).join('')}
+      </div>
+      <div class="quiz-explain"><strong>Explanation:</strong> ${q.explain}</div>
+    `;
+    quizContainer.appendChild(div);
+  });
+  bindQuiz();
+  restoreQuizState();
+}
+function bindQuiz() {
+  quizContainer.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.quizSubmitted) return;
+      const parent = btn.parentElement;
+      const qi = +parent.dataset.qi;
+      parent.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.quizAnswers[qi] = +btn.dataset.choice;
+      updateQuizProgress();
+      saveState();
+    });
+  });
+}
+function updateQuizProgress() {
+  const answered = Object.keys(state.quizAnswers).length;
+  document.getElementById('quizProgText').textContent = `${answered} of ${quizData.length} answered`;
+  document.getElementById('submitQuiz').disabled = answered !== quizData.length || state.quizSubmitted;
+}
+function restoreQuizState() {
+  Object.entries(state.quizAnswers).forEach(([qi, choice]) => {
+    const opts = quizContainer.querySelector(`[data-qi="${qi}"]`);
+    if (!opts) return;
+    const btn = opts.querySelector(`[data-choice="${choice}"]`);
+    if (btn) btn.classList.add('selected');
+  });
+  if (state.quizSubmitted) revealQuizResults();
+  updateQuizProgress();
+}
+function revealQuizResults() {
+  let score = 0;
+  quizData.forEach((q, i) => {
+    const opts = quizContainer.querySelector(`[data-qi="${i}"]`);
+    if (!opts) return;
+    const chosen = state.quizAnswers[i];
+    opts.querySelectorAll('.quiz-option').forEach(b => {
+      b.classList.add('disabled');
+      const c = +b.dataset.choice;
+      if (c === q.answer) b.classList.add('correct');
+      else if (c === chosen) b.classList.add('wrong');
+    });
+    opts.parentElement.querySelector('.quiz-explain').classList.add('show');
+    if (chosen === q.answer) score++;
+  });
+  state.quizScore = score;
+  document.getElementById('scoreNum').textContent = score;
+  const msg = document.getElementById('quizMessage');
+  const verdict = document.getElementById('quizVerdict');
+  const pct = score / quizData.length;
+  if (pct >= 0.85) {
+    verdict.className = 'verdict great';
+    verdict.textContent = '🏆 Excellent!';
+    msg.textContent = "The full life table is in your R toolkit. Block 1 is done.";
+  } else if (pct >= 0.6) {
+    verdict.className = 'verdict good';
+    verdict.textContent = '👍 Good work';
+    msg.textContent = "Solid. Review the wrong ones and try again if you'd like.";
+  } else {
+    verdict.className = 'verdict ok';
+    verdict.textContent = 'Keep going 💪';
+    msg.textContent = "Review the slides and flashcards, then retake.";
+  }
+  document.getElementById('quizResult').classList.add('show');
+  document.getElementById('submitQuiz').disabled = true;
+}
+document.getElementById('submitQuiz').addEventListener('click', () => {
+  state.quizSubmitted = true;
+  revealQuizResults();
+  updateStats();
+  saveState();
+});
+document.getElementById('retakeQuiz').addEventListener('click', () => {
+  state.quizAnswers = {};
+  state.quizScore = null;
+  state.quizSubmitted = false;
+  document.getElementById('quizResult').classList.remove('show');
+  renderQuiz();
+  updateQuizProgress();
+  updateStats();
+  saveState();
+});
+
+const flashcards = [
+  { term: "Life Table", def: "A statistical tool that summarises mortality, survival, and life expectancy across age bands, built from a single input vector of age specific death rates." },
+  { term: "Cohort (Generation) Life Table", def: "Follows a real cohort from birth until everyone has died. Accurate but slow; needs many decades of data." },
+  { term: "Period (Current) Life Table", def: "Uses age specific mortality rates from one recent period and applies them to a synthetic cohort. The standard practical table." },
+  { term: "Complete Life Table", def: "Uses single year age intervals (0, 1, 2, ..., 100+). Detailed but data hungry." },
+  { term: "Abridged Life Table", def: "Uses wider intervals such as 0-4, 5-9, ..., with an open last band. The realistic choice for most real datasets." },
+  { term: "Radix l0", def: "The hypothetical starting cohort, usually 100,000 births. All lx and ndx values are scaled to this radix." },
+  { term: "nMx", def: "Age specific death rate, deaths per person year in the age band x to x+n. The only input the life table needs." },
+  { term: "Fergany method", def: "nqx = 1 − exp(−n × nMx). The standard exponential transformation from rates to probabilities used in abridged life tables." },
+  { term: "nqx", def: "Probability of dying between exact ages x and x+n. 0 to 1 for closed bands; exactly 1 for the open last band." },
+  { term: "npx", def: "Probability of surviving from x to x+n. Equals 1 − nqx." },
+  { term: "lx", def: "Number of survivors at exact age x out of l0 born. Built from l0 with cumulative products of npx." },
+  { term: "ndx", def: "Number of deaths in the interval x to x+n. ndx = lx × nqx. The deaths column sums to l0 across all bands." },
+  { term: "nLx", def: "Person years lived in the interval. Trapezoidal (n/2)(lx + lx+n) for closed bands; lx / nMx for the open last band." },
+  { term: "Tx and ex", def: "Tx is cumulative person years from age x onwards (rev cumsum of nLx). ex = Tx / lx is life expectancy at exact age x. ex at the open band equals 1 / nMx for that band." }
+];
+const fcGrid = document.getElementById('flashcardsGrid');
+flashcards.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'flashcard';
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="flashcard-inner">
+      <div class="flashcard-front">
+        ${c.term}
+        <span class="hint">click to flip</span>
+      </div>
+      <div class="flashcard-back">${c.def}</div>
+    </div>
+  `;
+  card.addEventListener('click', () => {
+    card.classList.toggle('flipped');
+    if (card.classList.contains('flipped')) state.flashcardsFlipped.add(i);
+    updateStats();
+    saveState();
+  });
+  fcGrid.appendChild(card);
+});
+function restoreFlashcards() {
+  fcGrid.querySelectorAll('.flashcard').forEach(c => {
+    if (state.flashcardsFlipped.has(+c.dataset.idx)) c.classList.add('flipped');
+  });
+}
+
+const exercises = [
+  {
+    title: "1. Build the Cumilla data frame, then compute nqx with Fergany",
+    diff: "easy",
+    prompt: "The block below gives Cumilla District 2024 age specific death rates (illustrative). Type the four vectors into R, bind them into a data frame called <code>cm</code>, then compute the <strong>nqx</strong> column using the Fergany method, with the last band's nqx overridden to 1. Round to five decimals.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>age:  0, 5, 10, 15, 20, 25, 30, 35, 40, 45\nn:    5, 5, 5, 5, 5, 5, 5, 5, 5, NA\nnMx:  0.0070, 0.0010, 0.0010, 0.0015, 0.0020, 0.0030, 0.0040, 0.0055, 0.0080, 0.0320</code>",
+    hint: "nqx = 1 - exp(-n * nMx) element wise. Then cm$nqx[last] <- 1 for the open band.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age &lt;- c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45)\nn   &lt;- c(5, 5, 5, 5, 5, 5, 5, 5, 5, NA)\nnMx &lt;- c(0.0070, 0.0010, 0.0010, 0.0015, 0.0020,\n         0.0030, 0.0040, 0.0055, 0.0080, 0.0320)\ncm &lt;- data.frame(age, n, nMx)\n\nlast &lt;- nrow(cm)\ncm$nqx &lt;- 1 - exp(-cm$n * cm$nMx)\ncm$nqx[last] &lt;- 1\n\ncm$nqx\n# [1] 0.03441 0.00499 0.00499 0.00747 0.00995\n# [6] 0.01489 0.01980 0.02713 0.03921 1.00000</pre>"
+  },
+  {
+    title: "2. Build npx and verify nqx + npx = 1",
+    diff: "easy",
+    prompt: "Add an <code>npx</code> column to <code>cm</code>. Verify with <code>all.equal()</code> that nqx + npx equals 1 in every band.",
+    hint: "cm$npx <- 1 - cm$nqx, then all.equal(cm$nqx + cm$npx, rep(1, nrow(cm))).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>cm$npx &lt;- 1 - cm$nqx\n\nall.equal(cm$nqx + cm$npx, rep(1, nrow(cm)))\n# [1] TRUE</pre>"
+  },
+  {
+    title: "3. Build lx with cumprod()",
+    diff: "easy",
+    prompt: "Use a radix <code>l0 = 100,000</code> and <code>cumprod()</code> to build the <strong>lx</strong> column. Round to two decimals.",
+    hint: "cm$lx <- l0 * cumprod(c(1, cm$npx[-last])).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>l0 &lt;- 100000\ncm$lx &lt;- l0 * cumprod(c(1, cm$npx[-last]))\ncm$lx\n# [1] 100000.00 96559.90 96078.25 95599.00 94884.73\n# [6] 93940.63 92541.84 90709.39 88248.21 84787.85</pre>"
+  },
+  {
+    title: "4. Build ndx and verify sum = 100,000",
+    diff: "med",
+    prompt: "Add the <strong>ndx</strong> column. Verify that <code>sum(cm$ndx)</code> rounds to 100,000 (every birth ends in a death somewhere in the table).",
+    hint: "cm$ndx <- cm$lx * cm$nqx, then sum(cm$ndx).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>cm$ndx &lt;- cm$lx * cm$nqx\ncm$ndx\n# [1] 3440.10 481.65 479.25 714.27 944.10 1398.79\n# [7] 1832.45 2461.18 3460.36 84787.85\n\nsum(cm$ndx)\n# [1] 1e+05</pre>"
+  },
+  {
+    title: "5. Build nLx for both closed and open bands",
+    diff: "med",
+    prompt: "Compute the <strong>nLx</strong> column. Use the trapezoidal rule for the closed bands and the open formula <code>lx / nMx</code> for the last band. Round to two decimals.",
+    hint: "Loop i from 1 to last-1 with nLx[i] = (n[i]/2) * (lx[i] + lx[i+1]), then set nLx[last] = lx[last] / nMx[last].",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>cm$nLx &lt;- NA_real_\nfor (i in 1:(last - 1)) {\n  cm$nLx[i] &lt;- (cm$n[i] / 2) * (cm$lx[i] + cm$lx[i + 1])\n}\ncm$nLx[last] &lt;- cm$lx[last] / cm$nMx[last]\n\ncm$nLx\n# [1]  491399.75  481595.38  479193.13  476209.33  472063.40\n# [6]  466206.18  458128.08  447394.00  432590.15 2649620.31</pre>"
+  },
+  {
+    title: "6. Build Tx and ex, then read off life expectancy at birth",
+    diff: "med",
+    prompt: "Compute the <strong>Tx</strong> column using <code>rev(cumsum(rev(...)))</code> and the <strong>ex</strong> column as <code>Tx / lx</code>. Report Cumilla's life expectancy at birth and at age 25, rounded to two decimals.",
+    hint: "cm$Tx <- rev(cumsum(rev(cm$nLx))). cm$ex <- cm$Tx / cm$lx.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>cm$Tx &lt;- rev(cumsum(rev(cm$nLx)))\ncm$ex &lt;- cm$Tx / cm$lx\n\ncm[, c(\"age\", \"ex\")]\n#    age    ex\n# 1    0 68.54\n# 2    5 65.89\n# 3   10 61.21\n# 4   15 56.51\n# 5   20 51.91\n# 6   25 47.41\n# 7   30 43.09\n# 8   35 38.91\n# 9   40 34.91\n# 10  45 31.25\n\n# e0 = 68.54, e25 = 47.41\n# About 2.7 years lower at birth than Dhaka's 71.28.</pre>"
+  },
+  {
+    title: "7. Wrap the whole pipeline into one function",
+    diff: "hard",
+    prompt: "Write an R function <code>build_life_table(age, n, nMx, l0 = 100000)</code> that returns the full abridged life table with columns age, n, nMx, nqx, npx, lx, ndx, nLx, Tx, ex. Test it on the Cumilla data and confirm e0 matches Exercise 6.",
+    hint: "Combine the Fergany method, cumprod for lx, the open band overrides, the loop for closed nLx, and rev(cumsum(rev())) for Tx into one function.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>build_life_table &lt;- function(age, n, nMx, l0 = 100000) {\n  k &lt;- length(nMx)\n  nqx &lt;- 1 - exp(-n * nMx)\n  nqx[k] &lt;- 1\n  npx &lt;- 1 - nqx\n  lx  &lt;- l0 * cumprod(c(1, npx[-k]))\n  ndx &lt;- lx * nqx\n  nLx &lt;- numeric(k)\n  for (i in 1:(k - 1)) {\n    nLx[i] &lt;- (n[i] / 2) * (lx[i] + lx[i + 1])\n  }\n  nLx[k] &lt;- lx[k] / nMx[k]\n  Tx &lt;- rev(cumsum(rev(nLx)))\n  ex &lt;- Tx / lx\n  data.frame(age, n, nMx, nqx, npx, lx, ndx, nLx, Tx, ex)\n}\n\ncumilla_lt &lt;- build_life_table(\n  age = c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45),\n  n   = c(5, 5, 5, 5, 5, 5, 5, 5, 5, NA),\n  nMx = c(0.0070, 0.0010, 0.0010, 0.0015, 0.0020,\n          0.0030, 0.0040, 0.0055, 0.0080, 0.0320)\n)\ncumilla_lt$ex[1]\n# 68.54  (matches Exercise 6)</pre>"
+  }
+];
+
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <div class="exercise-head">
+      <h4>${ex.title}</h4>
+      <span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span>
+    </div>
+    <div class="exercise-prompt">${ex.prompt}</div>
+    <textarea placeholder="Write your R code here..." data-ex="${i}"></textarea>
+    <div class="exercise-actions">
+      <button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button>
+      <button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button>
+      <span class="save-indicator" data-ex="${i}"></span>
+    </div>
+    <div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div>
+    <div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>
+  `;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('quizStat').textContent = state.quizScore === null ? '—' : `${state.quizScore}/${quizData.length}`;
+  document.getElementById('flipStat').textContent = state.flashcardsFlipped.size;
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 4? Your slide position, quiz score, flashcards, and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+loadState();
+renderQuiz();
+restoreFlashcards();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+  });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>

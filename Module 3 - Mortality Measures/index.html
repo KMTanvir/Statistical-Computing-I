@@ -333,7 +333,7 @@ M_std_crude <span class="r-op">&lt;-</span> <span class="r-num">5.56</span>   <s
 P <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(mort<span class="r-op">$</span>population)    <span class="r-cm"># 5,500,000 mid year population</span>
 
 CDR <span class="r-op">&lt;-</span> D <span class="r-op">/</span> P <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(CDR, <span class="r-num">2</span>)
+CDR
 <span class="r-cm">#&gt; [1] 5.91</span></code></pre>
 
         <p>So Mymensingh recorded about <strong>5.91 deaths per 1,000 people</strong> in 2024.</p>
@@ -374,12 +374,12 @@ CDR <span class="r-op">&lt;-</span> D <span class="r-op">/</span> P <span class=
         <h3>Compute both in R</h3>
 <pre><code><span class="r-cm"># The full formula, inflate D and P separately</span>
 CDR_corr1 <span class="r-op">&lt;-</span> (D <span class="r-op">/</span> C_d) <span class="r-op">/</span> (P <span class="r-op">/</span> C_p) <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(CDR_corr1, <span class="r-num">2</span>)
+CDR_corr1
 <span class="r-cm">#&gt; [1] 6.18</span>
 
 <span class="r-cm"># The shortcut, scale the crude CDR</span>
 CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <span class="r-op">/</span> C_d
-<span class="r-func">round</span>(CDR_corr2, <span class="r-num">2</span>)
+CDR_corr2
 <span class="r-cm">#&gt; [1] 6.18</span></code></pre>
 
         <div class="example-box">
@@ -404,7 +404,7 @@ CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <s
         <p>where N is neonatal deaths (0 to 28 days) and B is total live births in the same year.</p>
 
 <pre><code>NMR <span class="r-op">&lt;-</span> deaths_neo <span class="r-op">/</span> B <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(NMR, <span class="r-num">2</span>)
+NMR
 <span class="r-cm">#&gt; [1] 15.00</span></code></pre>
 
         <h3>Infant Mortality Rate (IMR)</h3>
@@ -415,7 +415,7 @@ CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <s
         <p>where I is infant deaths (0 to 12 months).</p>
 
 <pre><code>IMR <span class="r-op">&lt;-</span> deaths_inf <span class="r-op">/</span> B <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(IMR, <span class="r-num">2</span>)
+IMR
 <span class="r-cm">#&gt; [1] 24.00</span></code></pre>
 
         <h3>Child Mortality Rate (CMR)</h3>
@@ -426,7 +426,7 @@ CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <s
         <p>where C is deaths aged 1 to 4 and P<sub>1 to 4</sub> is the mid year population in that age range.</p>
 
 <pre><code>CMR <span class="r-op">&lt;-</span> deaths_child <span class="r-op">/</span> P_1_4 <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(CMR, <span class="r-num">2</span>)
+CMR
 <span class="r-cm">#&gt; [1] 3.50</span></code></pre>
 
         <h3>Results at a glance</h3>
@@ -457,7 +457,7 @@ CDR_corr2 <span class="r-op">&lt;-</span> CDR <span class="r-op">*</span> C_p <s
 
         <h3>Compute the full ASDR vector</h3>
 <pre><code>mort<span class="r-op">$</span>ASDR <span class="r-op">&lt;-</span> mort<span class="r-op">$</span>deaths <span class="r-op">/</span> mort<span class="r-op">$</span>population <span class="r-op">*</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(mort[, <span class="r-func">c</span>(<span class="r-str">"age_group"</span>, <span class="r-str">"ASDR"</span>)], <span class="r-num">2</span>)
+mort[, <span class="r-func">c</span>(<span class="r-str">"age_group"</span>, <span class="r-str">"ASDR"</span>)]
 <span class="r-cm">#&gt;   age_group  ASDR</span>
 <span class="r-cm">#&gt; 1      0-14  0.40</span>
 <span class="r-cm">#&gt; 2     15-29  0.40</span>
@@ -573,7 +573,7 @@ expected <span class="r-op">&lt;-</span> mort<span class="r-op">$</span>ASDR <sp
 
 <span class="r-cm"># Age standardised death rate (per 1000)</span>
 ASR <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(expected) <span class="r-op">/</span> <span class="r-func">sum</span>(std_pop)
-<span class="r-func">round</span>(ASR, <span class="r-num">2</span>)
+ASR
 <span class="r-cm">#&gt; [1] 5.06</span></code></pre>
 
         <h3>Why this rescues the comparison</h3>
@@ -638,17 +638,17 @@ D_obs <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(mort<span 
 
 <span class="r-cm"># Expected deaths if Mymensingh had the standard's ASDRs</span>
 expected <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(M_std <span class="r-op">*</span> mort<span class="r-op">$</span>population) <span class="r-op">/</span> <span class="r-num">1000</span>
-<span class="r-func">round</span>(expected, <span class="r-num">0</span>)
+expected
 <span class="r-cm">#&gt; [1] 35705</span>
 
 <span class="r-cm"># Standardised Mortality Ratio</span>
 SMR <span class="r-op">&lt;-</span> D_obs <span class="r-op">/</span> expected
-<span class="r-func">round</span>(SMR, <span class="r-num">3</span>)
+SMR
 <span class="r-cm">#&gt; [1] 0.910</span>
 
 <span class="r-cm"># Indirectly standardised death rate (per 1000)</span>
 IDR <span class="r-op">&lt;-</span> SMR <span class="r-op">*</span> M_std_crude
-<span class="r-func">round</span>(IDR, <span class="r-num">2</span>)
+IDR
 <span class="r-cm">#&gt; [1] 5.06</span></code></pre>
 
         <div class="example-box">
@@ -1142,49 +1142,49 @@ const exercises = [
     diff: "easy",
     prompt: "The block below gives the Bogura District 2024 mortality table plus the inputs you will need for infant and child mortality (Exercise 3) and indirect standardisation (Exercise 6). Type it into R as a data frame <code>bog</code> plus the supporting constants, then compute the <strong>Crude Death Rate</strong>. Round to two decimals.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>age_group:  0-14, 15-29, 30-44, 45-59, 60-74, 75+\ndeaths:     630, 700, 1190, 3150, 7000, 8400\npopulation: 1050000, 1000000, 700000, 525000, 280000, 70000\n\n# Completeness fractions\nC_d = 0.82\nC_p = 0.89\n\n# Infant and child mortality inputs\nB            = 78000     # live births in 2024\ndeaths_neo   = 1560      # deaths aged 0 to 28 days\ndeaths_inf   = 2496      # deaths aged 0 to 12 months\ndeaths_child = 1260      # deaths aged 1 to 4 years\nP_1_4        = 280000    # mid year population aged 1 to 4\n\n# Indirect standardisation inputs (same as Module 3 Slide 2)\nM_std       = c(0.4, 0.5, 1.2, 3.5, 17.0, 80.0)\nM_std_crude = 5.56</code>",
     hint: "Make three vectors, bind them into a data frame, then sum(deaths) / sum(population) * 1000.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group  &lt;- c(\"0-14\",\"15-29\",\"30-44\",\"45-59\",\"60-74\",\"75+\")\ndeaths     &lt;- c(630, 700, 1190, 3150, 7000, 8400)\npopulation &lt;- c(1050000, 1000000, 700000, 525000, 280000, 70000)\nbog &lt;- data.frame(age_group, deaths, population)\n\nC_d &lt;- 0.82; C_p &lt;- 0.89\nB &lt;- 78000; deaths_neo &lt;- 1560; deaths_inf &lt;- 2496\ndeaths_child &lt;- 1260; P_1_4 &lt;- 280000\nM_std &lt;- c(0.4, 0.5, 1.2, 3.5, 17.0, 80.0)\nM_std_crude &lt;- 5.56\n\nD &lt;- sum(bog$deaths)        # 21,070\nP &lt;- sum(bog$population)    # 3,625,000\n\nCDR &lt;- D / P * 1000\nround(CDR, 2)\n# 5.81</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>age_group  &lt;- c(\"0-14\",\"15-29\",\"30-44\",\"45-59\",\"60-74\",\"75+\")\ndeaths     &lt;- c(630, 700, 1190, 3150, 7000, 8400)\npopulation &lt;- c(1050000, 1000000, 700000, 525000, 280000, 70000)\nbog &lt;- data.frame(age_group, deaths, population)\n\nC_d &lt;- 0.82; C_p &lt;- 0.89\nB &lt;- 78000; deaths_neo &lt;- 1560; deaths_inf &lt;- 2496\ndeaths_child &lt;- 1260; P_1_4 &lt;- 280000\nM_std &lt;- c(0.4, 0.5, 1.2, 3.5, 17.0, 80.0)\nM_std_crude &lt;- 5.56\n\nD &lt;- sum(bog$deaths)        # 21,070\nP &lt;- sum(bog$population)    # 3,625,000\n\nCDR &lt;- D / P * 1000\nCDR\n# 5.81</pre>"
   },
   {
     title: "2. Correct the CDR for completeness",
     diff: "easy",
     prompt: "Using <code>C_d</code> and <code>C_p</code> from Exercise 1, compute the <strong>completeness corrected</strong> CDR. Round to two decimals.",
     hint: "Either use the full formula or the shortcut CDR × C_p / C_d.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>CDR_corr &lt;- CDR * C_p / C_d\nround(CDR_corr, 2)\n# 6.31\n\n# Same answer, the long way:\nround((D / C_d) / (P / C_p) * 1000, 2)\n# 6.31</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>CDR_corr &lt;- CDR * C_p / C_d\nCDR_corr\n# 6.31\n\n# Same answer, the long way:\n(D / C_d) / (P / C_p) * 1000\n# 6.31</pre>"
   },
   {
     title: "3. Compute Bogura NMR, IMR, and CMR",
     diff: "easy",
     prompt: "Using <code>B</code>, <code>deaths_neo</code>, <code>deaths_inf</code>, <code>deaths_child</code>, and <code>P_1_4</code> from Exercise 1, compute the <strong>Neonatal</strong>, <strong>Infant</strong>, and <strong>Child Mortality Rates</strong> for Bogura. Round each to two decimals. Compare them to Mymensingh's (NMR = 15.00, IMR = 24.00, CMR = 3.50) and write one sentence on what you see.",
     hint: "NMR = deaths_neo / B * 1000. IMR = deaths_inf / B * 1000. CMR = deaths_child / P_1_4 * 1000.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>NMR &lt;- deaths_neo  / B     * 1000\nIMR &lt;- deaths_inf  / B     * 1000\nCMR &lt;- deaths_child / P_1_4 * 1000\n\nround(c(NMR = NMR, IMR = IMR, CMR = CMR), 2)\n#   NMR    IMR    CMR\n# 20.00  32.00   4.50\n\n# All three are markedly higher in Bogura than in Mymensingh.\n# The Bogura infant and child mortality story is consistent\n# with the heavier age specific mortality we saw on the\n# Direct Standardisation slide.</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>NMR &lt;- deaths_neo  / B     * 1000\nIMR &lt;- deaths_inf  / B     * 1000\nCMR &lt;- deaths_child / P_1_4 * 1000\n\nc(NMR = NMR, IMR = IMR, CMR = CMR)\n#   NMR    IMR    CMR\n# 20.00  32.00   4.50\n\n# All three are markedly higher in Bogura than in Mymensingh.\n# The Bogura infant and child mortality story is consistent\n# with the heavier age specific mortality we saw on the\n# Direct Standardisation slide.</pre>"
   },
   {
     title: "4. Compute ASDR vector and plot the mortality curve",
     diff: "easy",
     prompt: "Add an <code>ASDR</code> column to <code>bog</code> (deaths / population × 1000), round and print, then draw a line plot of the Bogura mortality curve with age band labels on the x axis.",
     hint: "Element wise division for the vector. plot(... type = \"o\", pch = 19, xaxt = \"n\"), then axis(1, at = 1:6, labels = bog$age_group).",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>bog$ASDR &lt;- bog$deaths / bog$population * 1000\nround(bog[, c(\"age_group\",\"ASDR\")], 2)\n#   age_group   ASDR\n# 1      0-14   0.60\n# 2     15-29   0.70\n# 3     30-44   1.70\n# 4     45-59   6.00\n# 5     60-74  25.00\n# 6       75+ 120.00\n\nplot(bog$ASDR, type = \"o\", pch = 19, col = \"#dc2626\",\n     xaxt = \"n\", xlab = \"Age group\",\n     ylab = \"ASDR (per 1000)\",\n     main = \"Bogura 2024, Age Specific Mortality\")\naxis(1, at = 1:6, labels = bog$age_group)</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>bog$ASDR &lt;- bog$deaths / bog$population * 1000\nbog[, c(\"age_group\",\"ASDR\")]\n#   age_group   ASDR\n# 1      0-14   0.60\n# 2     15-29   0.70\n# 3     30-44   1.70\n# 4     45-59   6.00\n# 5     60-74  25.00\n# 6       75+ 120.00\n\nplot(bog$ASDR, type = \"o\", pch = 19, col = \"#dc2626\",\n     xaxt = \"n\", xlab = \"Age group\",\n     ylab = \"ASDR (per 1000)\",\n     main = \"Bogura 2024, Age Specific Mortality\")\naxis(1, at = 1:6, labels = bog$age_group)</pre>"
   },
   {
     title: "5. Apply direct standardisation to Bogura",
     diff: "med",
     prompt: "Use the same reference standard population from Module 3 Slide 2 (<code>std_pop = c(28000, 25000, 20000, 15000, 8000, 4000)</code>) to compute the <strong>direct age standardised death rate</strong> for Bogura. Round to two decimals.",
     hint: "ASR = sum(bog$ASDR * std_pop) / sum(std_pop).",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>std_pop &lt;- c(28000, 25000, 20000, 15000, 8000, 4000)\n\nASR_bog &lt;- sum(bog$ASDR * std_pop) / sum(std_pop)\nround(ASR_bog, 2)\n# 8.38</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>std_pop &lt;- c(28000, 25000, 20000, 15000, 8000, 4000)\n\nASR_bog &lt;- sum(bog$ASDR * std_pop) / sum(std_pop)\nASR_bog\n# 8.38</pre>"
   },
   {
     title: "6. Indirect standardisation for Bogura, with SMR",
     diff: "med",
     prompt: "Using <code>M_std</code> and <code>M_std_crude</code> from Exercise 1, compute Bogura's <strong>expected deaths</strong>, <strong>SMR</strong>, and the <strong>indirectly standardised rate</strong>. Round SMR to three decimals and the rate to two. Do the direct and indirect rates agree?",
     hint: "expected = sum(M_std * bog$population) / 1000. SMR = D / expected. Indirect rate = SMR * M_std_crude.",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>D_obs    &lt;- sum(bog$deaths)                       # 21,070\nexpected &lt;- sum(M_std * bog$population) / 1000    # 13,958\n\nSMR &lt;- D_obs / expected\nround(SMR, 3)\n# 1.510  (Bogura mortality is 51% above the standard's prediction)\n\nIDR &lt;- SMR * M_std_crude\nround(IDR, 2)\n# 8.40  (matches the direct standardised rate of 8.38)\n\n# Both methods give essentially the same conclusion.</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>D_obs    &lt;- sum(bog$deaths)                       # 21,070\nexpected &lt;- sum(M_std * bog$population) / 1000    # 13,958\n\nSMR &lt;- D_obs / expected\nSMR\n# 1.510  (Bogura mortality is 51% above the standard's prediction)\n\nIDR &lt;- SMR * M_std_crude\nIDR\n# 8.40  (matches the direct standardised rate of 8.38)\n\n# Both methods give essentially the same conclusion.</pre>"
   },
   {
     title: "7. One function for the full mortality report",
     diff: "hard",
     prompt: "Write an R function <code>mortality_report(deaths, population, C_d, C_p, std_pop, M_std, M_std_crude)</code> that returns a named numeric vector with: <code>CDR</code>, <code>CDR_corr</code>, <code>ASR_direct</code>, <code>SMR</code>, <code>ASR_indirect</code>. Test it on Bogura.",
     hint: "Compute D, P, ASDR from the inputs. Then apply each formula in turn and return a named c().",
-    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>mortality_report &lt;- function(deaths, population, C_d, C_p,\n                             std_pop, M_std, M_std_crude) {\n  D &lt;- sum(deaths)\n  P &lt;- sum(population)\n  CDR      &lt;- D / P * 1000\n  CDR_corr &lt;- CDR * C_p / C_d\n  ASDR     &lt;- deaths / population * 1000\n  ASR_dir  &lt;- sum(ASDR * std_pop) / sum(std_pop)\n  expected &lt;- sum(M_std * population) / 1000\n  SMR      &lt;- D / expected\n  ASR_ind  &lt;- SMR * M_std_crude\n  round(c(CDR          = CDR,\n          CDR_corr     = CDR_corr,\n          ASR_direct   = ASR_dir,\n          SMR          = SMR,\n          ASR_indirect = ASR_ind), 3)\n}\n\nmortality_report(\n  deaths     = bog$deaths,\n  population = bog$population,\n  C_d        = 0.82, C_p = 0.89,\n  std_pop    = std_pop,\n  M_std      = M_std,\n  M_std_crude = M_std_crude\n)\n#         CDR    CDR_corr  ASR_direct        SMR  ASR_indirect\n#       5.812      6.308       8.378      1.510         8.396</pre>"
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>mortality_report &lt;- function(deaths, population, C_d, C_p,\n                             std_pop, M_std, M_std_crude) {\n  D &lt;- sum(deaths)\n  P &lt;- sum(population)\n  CDR      &lt;- D / P * 1000\n  CDR_corr &lt;- CDR * C_p / C_d\n  ASDR     &lt;- deaths / population * 1000\n  ASR_dir  &lt;- sum(ASDR * std_pop) / sum(std_pop)\n  expected &lt;- sum(M_std * population) / 1000\n  SMR      &lt;- D / expected\n  ASR_ind  &lt;- SMR * M_std_crude\n  c(CDR          = CDR,\n          CDR_corr     = CDR_corr,\n          ASR_direct   = ASR_dir,\n          SMR          = SMR,\n          ASR_indirect = ASR_ind)\n}\n\nmortality_report(\n  deaths     = bog$deaths,\n  population = bog$population,\n  C_d        = 0.82, C_p = 0.89,\n  std_pop    = std_pop,\n  M_std      = M_std,\n  M_std_crude = M_std_crude\n)\n#         CDR    CDR_corr  ASR_direct        SMR  ASR_indirect\n#       5.812      6.308       8.378      1.510         8.396</pre>"
   }
 ];
 
