@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6: Randomized Complete Block Design</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+table.data-table.compact th, table.data-table.compact td { padding: 10px 14px; font-size: 16px; }
+table.data-table.compact th { font-size: 15px; }
+.hat { position: relative; display: inline-block; }
+.hat::after { content: "^"; position: absolute; left: 62%; top: -0.38em; transform: translateX(-50%); font-size: 0.85em; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 6</span>
+  <h1>Randomized Complete Block Design (RCBD) in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 9</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome + description -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 6</h2>
+        <p>The Randomized Complete Block Design (RCBD) is the natural extension of CRD when experimental units are <em>not</em> homogeneous. We pull one known nuisance factor out and treat it as a block, so the F test for treatments is no longer contaminated by it.</p>
+
+        <h3>Description of RCBD</h3>
+        <ul>
+          <li>Used when experimental units fall into <strong>identifiable groups (blocks)</strong> that differ in known ways: soil fertility strata, fabric batches, days of the week, time slots, machines.</li>
+          <li>Within each block, every treatment appears <strong>exactly once</strong> (hence "complete"). Treatments are randomly assigned <em>within</em> each block.</li>
+          <li>Each block acts as a mini CRD. The block effect absorbs systematic between block variation that would otherwise inflate the error term.</li>
+        </ul>
+
+        <h3>How RCBD differs from CRD</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Aspect</th><th>CRD</th><th>RCBD</th></tr></thead>
+          <tbody>
+            <tr><td>Experimental units</td><td>Homogeneous</td><td>Grouped into blocks that differ</td></tr>
+            <tr><td>Randomisation</td><td>Across all units</td><td>Within each block</td></tr>
+            <tr><td>Model terms</td><td>μ + τ<sub>i</sub> + ε<sub>ij</sub></td><td>μ + τ<sub>i</sub> + β<sub>j</sub> + ε<sub>ij</sub></td></tr>
+            <tr><td>df breakdown</td><td>Treatment, Error</td><td>Treatment, Block, Error</td></tr>
+            <tr><td>Error df</td><td>N − a</td><td>(a − 1)(b − 1)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>What you will be able to do by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li>State the RCBD linear model and write both treatment and block hypotheses</li>
+          <li>Compute the full ANOVA table by hand, with separate sources for treatment, block, and error</li>
+          <li>Fit the same model with <code>aov(y ~ treat + block, data = df)</code></li>
+          <li>Estimate treatment and block effects from cell means</li>
+          <li>Check model adequacy and decide whether blocking was worth it</li>
+          <li>Run Tukey HSD pairwise comparisons on the treatment means</li>
+        </ul>
+      </div>
+
+      <!-- SLIDE 2: Model + hypothesis -->
+      <div class="slide" data-slide="2">
+        <h2>The Linear Model and Two Hypotheses</h2>
+
+        <h3>Fixed effects model for RCBD</h3>
+        <div class="formula-box">
+          y<sub>ij</sub> &nbsp;=&nbsp; &mu; &nbsp;+&nbsp; &tau;<sub>i</sub> &nbsp;+&nbsp; &beta;<sub>j</sub> &nbsp;+&nbsp; &epsilon;<sub>ij</sub>
+        </div>
+        <p style="text-align: center;">i = 1, ..., a treatments; j = 1, ..., b blocks; one observation per (i, j) cell</p>
+
+        <ul>
+          <li><code>y<sub>ij</sub></code>: observation under treatment i in block j.</li>
+          <li><code>&mu;</code>: overall grand mean.</li>
+          <li><code>&tau;<sub>i</sub></code>: effect of treatment i (deviation from &mu;), with constraint &Sigma; &tau;<sub>i</sub> = 0.</li>
+          <li><code>&beta;<sub>j</sub></code>: effect of block j, with constraint &Sigma; &beta;<sub>j</sub> = 0.</li>
+          <li><code>&epsilon;<sub>ij</sub></code>: random error, iid Normal(0, &sigma;<sup>2</sup>).</li>
+        </ul>
+
+        <h3>Two hypotheses, one ANOVA</h3>
+        <div class="example-box">
+          <strong>For treatments.</strong><br>
+          H<sub>0</sub><sup>(T)</sup>: &tau;<sub>1</sub> = ... = &tau;<sub>a</sub> = 0 &nbsp;&nbsp; (no treatment effect)<br>
+          H<sub>1</sub><sup>(T)</sup>: at least one &tau;<sub>i</sub> &ne; 0<br><br>
+          <strong>For blocks.</strong><br>
+          H<sub>0</sub><sup>(B)</sup>: &beta;<sub>1</sub> = ... = &beta;<sub>b</sub> = 0 &nbsp;&nbsp; (no block effect)<br>
+          H<sub>1</sub><sup>(B)</sup>: at least one &beta;<sub>j</sub> &ne; 0
+        </div>
+
+        <div class="tip-box">
+          <strong>The block F test has a different role.</strong> We are usually not interested in the block effect on its own. Testing the block effect tells us whether blocking was a good idea: if the block F is large, blocking absorbed real variation and the treatment F is more powerful than a CRD would have been. If the block F is small, blocking did not help much.
+        </div>
+
+        <h3>Assumptions to check, same three as CRD</h3>
+        <ol>
+          <li><strong>Normality</strong> of residuals (QQ plot)</li>
+          <li><strong>Equal variance</strong> across all treatment-by-block cells (residuals vs fitted)</li>
+          <li><strong>Independence</strong> of errors (residuals vs run order)</li>
+        </ol>
+      </div>
+
+      <!-- SLIDE 3: Working dataset -->
+      <div class="slide" data-slide="3">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">BARI wheat variety trial 2024, 4 varieties tested across 5 soil fertility blocks.</p>
+
+        <p>BARI tested four wheat varieties (<strong>BARI Gom 24</strong>, <strong>26</strong>, <strong>30</strong>, <strong>33</strong>) on five soil fertility strata (Block 1 lowest, Block 5 highest). Each variety appears <em>exactly once</em> in each block, giving 4 &times; 5 = 20 observations. The response is grain yield (Mg/ha).</p>
+
+        <h3>Type the data into R</h3>
+<pre><code><span class="r-cm"># 4 varieties (treatments) x 5 fertility blocks, yield in Mg/ha</span>
+treat <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-func">c</span>(<span class="r-str">"V1"</span>, <span class="r-str">"V2"</span>, <span class="r-str">"V3"</span>, <span class="r-str">"V4"</span>), times <span class="r-op">=</span> <span class="r-num">5</span>)
+block <span class="r-op">&lt;-</span> <span class="r-func">rep</span>(<span class="r-func">c</span>(<span class="r-str">"B1"</span>, <span class="r-str">"B2"</span>, <span class="r-str">"B3"</span>, <span class="r-str">"B4"</span>, <span class="r-str">"B5"</span>), each <span class="r-op">=</span> <span class="r-num">4</span>)
+yield <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">3.30</span>, <span class="r-num">3.95</span>, <span class="r-num">4.25</span>, <span class="r-num">3.80</span>,    <span class="r-cm"># B1</span>
+            <span class="r-num">3.85</span>, <span class="r-num">4.10</span>, <span class="r-num">4.80</span>, <span class="r-num">3.95</span>,    <span class="r-cm"># B2</span>
+            <span class="r-num">4.20</span>, <span class="r-num">4.80</span>, <span class="r-num">4.95</span>, <span class="r-num">4.30</span>,    <span class="r-cm"># B3</span>
+            <span class="r-num">4.35</span>, <span class="r-num">5.05</span>, <span class="r-num">5.40</span>, <span class="r-num">4.60</span>,    <span class="r-cm"># B4</span>
+            <span class="r-num">4.90</span>, <span class="r-num">5.00</span>, <span class="r-num">5.60</span>, <span class="r-num">4.85</span>)    <span class="r-cm"># B5</span>
+
+wheat <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(treat <span class="r-op">=</span> <span class="r-func">factor</span>(treat),
+                    block <span class="r-op">=</span> <span class="r-func">factor</span>(block),
+                    yield)</code></pre>
+
+        <h3>What the layout looks like</h3>
+        <table class="data-table compact">
+          <thead>
+            <tr><th>Block</th><th class="num">V1</th><th class="num">V2</th><th class="num">V3</th><th class="num">V4</th><th class="num">Block sum</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>B1</td><td class="num">3.30</td><td class="num">3.95</td><td class="num">4.25</td><td class="num">3.80</td><td class="num">15.30</td></tr>
+            <tr><td>B2</td><td class="num">3.85</td><td class="num">4.10</td><td class="num">4.80</td><td class="num">3.95</td><td class="num">16.70</td></tr>
+            <tr><td>B3</td><td class="num">4.20</td><td class="num">4.80</td><td class="num">4.95</td><td class="num">4.30</td><td class="num">18.25</td></tr>
+            <tr><td>B4</td><td class="num">4.35</td><td class="num">5.05</td><td class="num">5.40</td><td class="num">4.60</td><td class="num">19.40</td></tr>
+            <tr><td>B5</td><td class="num">4.90</td><td class="num">5.00</td><td class="num">5.60</td><td class="num">4.85</td><td class="num">20.35</td></tr>
+            <tr class="hl"><td><strong>Treat sum</strong></td><td class="num"><strong>20.60</strong></td><td class="num"><strong>22.90</strong></td><td class="num"><strong>25.00</strong></td><td class="num"><strong>21.50</strong></td><td class="num"><strong>G = 90.00</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>Eyeball the table.</strong> Going down each column you see yields climb from B1 to B5: this is the block effect, lower fertility soil produces less yield. Going across each row you see V3 always highest: this is the treatment effect.
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Manual ANOVA -->
+      <div class="slide" data-slide="4">
+        <h2>Manual ANOVA Decomposition</h2>
+        <p>With <code>a = 4</code> treatments and <code>b = 5</code> blocks, <code>N = a &times; b = 20</code>. The total variation now splits into three pieces: treatments, blocks, and error.</p>
+
+        <div class="formula-box">
+          CF &nbsp;=&nbsp; G<sup>2</sup> / N<br>
+          SS<sub>total</sub> &nbsp;=&nbsp; &Sigma; y<sup>2</sup> &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>treat</sub> &nbsp;=&nbsp; &Sigma; T<sub>i</sub><sup>2</sup> / b &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>block</sub> &nbsp;=&nbsp; &Sigma; B<sub>j</sub><sup>2</sup> / a &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>error</sub> &nbsp;=&nbsp; SS<sub>total</sub> &nbsp;&minus;&nbsp; SS<sub>treat</sub> &nbsp;&minus;&nbsp; SS<sub>block</sub>
+        </div>
+
+        <h3>Degrees of freedom</h3>
+        <ul>
+          <li>df<sub>treat</sub> = a − 1 = 3</li>
+          <li>df<sub>block</sub> = b − 1 = 4</li>
+          <li>df<sub>error</sub> = (a − 1)(b − 1) = 12</li>
+          <li>df<sub>total</sub> = N − 1 = 19 &nbsp; (and 3 + 4 + 12 = 19 ✓)</li>
+        </ul>
+
+        <h3>Compute it in R</h3>
+<pre><code>a <span class="r-op">&lt;-</span> <span class="r-num">4</span>; b <span class="r-op">&lt;-</span> <span class="r-num">5</span>; N <span class="r-op">&lt;-</span> a <span class="r-op">*</span> b
+
+CF       <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(wheat<span class="r-op">$</span>yield)<span class="r-op">^</span><span class="r-num">2</span> <span class="r-op">/</span> N
+SST      <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(wheat<span class="r-op">$</span>yield<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">-</span> CF
+
+T_tot    <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(wheat<span class="r-op">$</span>yield, wheat<span class="r-op">$</span>treat, sum)
+B_tot    <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(wheat<span class="r-op">$</span>yield, wheat<span class="r-op">$</span>block, sum)
+
+SS_treat <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(T_tot<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> b <span class="r-op">-</span> CF
+SS_block <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(B_tot<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> a <span class="r-op">-</span> CF
+SSE      <span class="r-op">&lt;-</span> SST <span class="r-op">-</span> SS_treat <span class="r-op">-</span> SS_block
+
+df_treat <span class="r-op">&lt;-</span> a <span class="r-op">-</span> <span class="r-num">1</span>
+df_block <span class="r-op">&lt;-</span> b <span class="r-op">-</span> <span class="r-num">1</span>
+df_error <span class="r-op">&lt;-</span> (a <span class="r-op">-</span> <span class="r-num">1</span>) <span class="r-op">*</span> (b <span class="r-op">-</span> <span class="r-num">1</span>)
+
+MS_treat <span class="r-op">&lt;-</span> SS_treat <span class="r-op">/</span> df_treat
+MS_block <span class="r-op">&lt;-</span> SS_block <span class="r-op">/</span> df_block
+MSE      <span class="r-op">&lt;-</span> SSE      <span class="r-op">/</span> df_error
+
+F_treat  <span class="r-op">&lt;-</span> MS_treat <span class="r-op">/</span> MSE
+F_block  <span class="r-op">&lt;-</span> MS_block <span class="r-op">/</span> MSE
+
+<span class="r-func">c</span>(SS_treat <span class="r-op">=</span> SS_treat, SS_block <span class="r-op">=</span> SS_block, SSE <span class="r-op">=</span> SSE,
+        F_treat <span class="r-op">=</span> F_treat, F_block <span class="r-op">=</span> F_block)
+<span class="r-cm">#&gt; SS_treat SS_block      SSE  F_treat  F_block </span>
+<span class="r-cm">#&gt;    2.204    4.131    0.245   35.967   50.580</span></code></pre>
+
+        <p>F<sub>tab</sub> at α = 0.05 are <code>qf(0.95, 3, 12) = 3.49</code> for treatments and <code>qf(0.95, 4, 12) = 3.26</code> for blocks. Both calculated F values are far larger, so we reject both nulls.</p>
+
+        <div class="practice" data-q="s4">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">In a RCBD with <code>a = 6</code> treatments and <code>b = 4</code> blocks, the error degrees of freedom equal:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">5</button>
+            <button class="practice-btn" data-correct="false">3</button>
+            <button class="practice-btn" data-correct="true">15</button>
+            <button class="practice-btn" data-correct="false">23</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: aov() -->
+      <div class="slide" data-slide="5">
+        <h2>One Line ANOVA with aov()</h2>
+        <p>The whole RCBD analysis collapses to one model fit, with treatment and block on the right hand side of the formula.</p>
+
+<pre><code>model <span class="r-op">&lt;-</span> <span class="r-func">aov</span>(yield <span class="r-op">~</span> treat <span class="r-op">+</span> block, data <span class="r-op">=</span> wheat)
+<span class="r-func">summary</span>(model)
+<span class="r-cm">#&gt;             Df Sum Sq Mean Sq F value   Pr(&gt;F)    </span>
+<span class="r-cm">#&gt; treat        3  2.204  0.7347   35.97 2.49e-06 ***</span>
+<span class="r-cm">#&gt; block        4  4.131  1.0328   50.58 2.85e-07 ***</span>
+<span class="r-cm">#&gt; Residuals   12  0.245  0.0204                     </span>
+<span class="r-cm">#&gt; ---</span></code></pre>
+
+        <h3>The full RCBD ANOVA table</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Source</th><th class="num">df</th><th class="num">SS</th><th class="num">MS</th><th class="num">F</th><th class="num">p value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Treatment (variety)</td><td class="num">3</td><td class="num">2.204</td><td class="num">0.735</td><td class="num">35.97</td><td class="num">&lt; 0.001</td></tr>
+            <tr><td>Block (fertility)</td><td class="num">4</td><td class="num">4.131</td><td class="num">1.033</td><td class="num">50.58</td><td class="num">&lt; 0.001</td></tr>
+            <tr><td>Error</td><td class="num">12</td><td class="num">0.245</td><td class="num">0.020</td><td class="num"></td><td class="num"></td></tr>
+            <tr class="hl"><td><strong>Total</strong></td><td class="num"><strong>19</strong></td><td class="num"><strong>6.580</strong></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Was blocking worthwhile?</h3>
+        <p>Yes, by a wide margin. If we had run this as a CRD (no block term), the block SS would have been pooled into the error, giving MSE ≈ (0.245 + 4.131) / (12 + 4) = 0.274 instead of 0.020. The treatment F would have dropped from <strong>35.97</strong> down to roughly <strong>2.68</strong>, around the borderline at α = 0.05. Blocking on soil fertility roughly <em>14×</em> the precision of the treatment test here.</p>
+
+        <div class="example-box">
+          <strong>Conclusions.</strong> Both treatments and blocks are highly significant. Variety has a real effect on yield, and the soil fertility strata also vary systematically. We will identify <em>which</em> varieties differ in Slide 8 with Tukey HSD.
+        </div>
+      </div>
+
+      <!-- SLIDE 6: Effects estimation -->
+      <div class="slide" data-slide="6">
+        <h2>Estimating Treatment and Block Effects</h2>
+        <p>The ANOVA tells us treatments differ. To say <em>by how much</em>, we estimate each effect as a deviation from the grand mean.</p>
+
+        <div class="formula-box">
+          <span class="hat">&mu;</span> &nbsp;=&nbsp; ȳ<sub>..</sub> (grand mean)<br>
+          <span class="hat">&tau;</span><sub>i</sub> &nbsp;=&nbsp; ȳ<sub>i.</sub> &nbsp;&minus;&nbsp; ȳ<sub>..</sub>&nbsp;&nbsp;(treatment effect)<br>
+          <span class="hat">&beta;</span><sub>j</sub> &nbsp;=&nbsp; ȳ<sub>.j</sub> &nbsp;&minus;&nbsp; ȳ<sub>..</sub>&nbsp;&nbsp;(block effect)
+        </div>
+
+        <h3>Compute it in R</h3>
+<pre><code>grand_mean <span class="r-op">&lt;-</span> <span class="r-func">mean</span>(wheat<span class="r-op">$</span>yield)                  <span class="r-cm"># 4.50</span>
+treat_mean <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(wheat<span class="r-op">$</span>yield, wheat<span class="r-op">$</span>treat, mean)
+block_mean <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(wheat<span class="r-op">$</span>yield, wheat<span class="r-op">$</span>block, mean)
+
+tau_hat  <span class="r-op">&lt;-</span> treat_mean <span class="r-op">-</span> grand_mean
+beta_hat <span class="r-op">&lt;-</span> block_mean <span class="r-op">-</span> grand_mean
+
+<span class="r-func">cbind</span>(mean <span class="r-op">=</span> treat_mean, tau_hat <span class="r-op">=</span> tau_hat)
+<span class="r-cm">#&gt;    mean tau_hat</span>
+<span class="r-cm">#&gt; V1 4.12   -0.38</span>
+<span class="r-cm">#&gt; V2 4.58    0.08</span>
+<span class="r-cm">#&gt; V3 5.00    0.50</span>
+<span class="r-cm">#&gt; V4 4.30   -0.20</span>
+
+<span class="r-func">cbind</span>(mean <span class="r-op">=</span> block_mean, beta_hat <span class="r-op">=</span> beta_hat)
+<span class="r-cm">#&gt;    mean beta_hat</span>
+<span class="r-cm">#&gt; B1 3.825    -0.675</span>
+<span class="r-cm">#&gt; B2 4.175    -0.325</span>
+<span class="r-cm">#&gt; B3 4.5625    0.0625</span>
+<span class="r-cm">#&gt; B4 4.85      0.35</span>
+<span class="r-cm">#&gt; B5 5.0875    0.5875</span></code></pre>
+
+        <div class="example-box">
+          <strong>How to read it.</strong> V3 boosts yield by 0.50 Mg/ha above the grand mean, V1 drops it by 0.38. Block 5 (high fertility) adds 0.59 to any variety planted there, Block 1 (low fertility) subtracts 0.68. The two effects add to give the cell mean exactly under the fitted model.
+        </div>
+
+        <h3>Sum of estimates equals zero, by construction</h3>
+<pre><code><span class="r-func">sum</span>(tau_hat)
+<span class="r-cm">#&gt; [1] 0</span>
+<span class="r-func">sum</span>(beta_hat)
+<span class="r-cm">#&gt; [1] 0</span></code></pre>
+      </div>
+
+      <!-- SLIDE 7: Model adequacy -->
+      <div class="slide" data-slide="7">
+        <h2>Model Adequacy Checks</h2>
+        <p>The three standard checks from CRD carry over unchanged. Extract residuals from the fitted model and inspect three plots.</p>
+
+<pre><code>res <span class="r-op">&lt;-</span> <span class="r-func">residuals</span>(model)
+fit <span class="r-op">&lt;-</span> <span class="r-func">fitted</span>(model)
+
+<span class="r-cm"># 1. Normality of residuals</span>
+<span class="r-func">qqnorm</span>(res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+       main <span class="r-op">=</span> <span class="r-str">"Normal QQ plot of residuals"</span>)
+<span class="r-func">qqline</span>(res, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>, lwd <span class="r-op">=</span> <span class="r-num">2</span>)
+
+<span class="r-cm"># 2. Equal variance across fitted values</span>
+<span class="r-func">plot</span>(fit, res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Fitted values"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Residuals vs Fitted"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)
+
+<span class="r-cm"># 3. Independence, residuals vs run order</span>
+<span class="r-func">plot</span>(<span class="r-func">seq_along</span>(res), res, type <span class="r-op">=</span> <span class="r-str">"b"</span>, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Run order"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>,
+     main <span class="r-op">=</span> <span class="r-str">"Residuals vs run order"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)</code></pre>
+
+        <div class="warn-box">
+          <strong>What to look for, briefly.</strong> A QQ plot with points hugging the line supports normality. A flat horizontal band on the residuals vs fitted plot supports equal variance. Random scatter on the run order plot supports independence. Patterns or trends in any plot threaten the F test conclusions.
+        </div>
+
+        <div class="tip-box">
+          <strong>Shortcut.</strong> <code>plot(model)</code> draws four standard diagnostic panels in one call (residuals vs fitted, QQ plot, scale location, leverage).
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Tukey HSD + when blocking helps -->
+      <div class="slide" data-slide="8">
+        <h2>Pairwise Comparison and When Blocking Helps</h2>
+
+        <h3>Tukey HSD on the treatment factor only</h3>
+        <p>Even when the model has a block term, we only want pairwise comparisons among treatments. Pass the treatment factor explicitly to <code>TukeyHSD()</code>:</p>
+
+<pre><code><span class="r-func">TukeyHSD</span>(model, <span class="r-str">"treat"</span>, conf.level <span class="r-op">=</span> <span class="r-num">0.95</span>)
+<span class="r-cm">#&gt; $treat</span>
+<span class="r-cm">#&gt;        diff     lwr    upr   p adj</span>
+<span class="r-cm">#&gt; V2-V1  0.46  0.1925 0.7275 0.0011</span>
+<span class="r-cm">#&gt; V3-V1  0.88  0.6125 1.1475 0.0000</span>
+<span class="r-cm">#&gt; V4-V1  0.18 -0.0875 0.4475 0.2331</span>
+<span class="r-cm">#&gt; V3-V2  0.42  0.1525 0.6875 0.0023</span>
+<span class="r-cm">#&gt; V4-V2 -0.28 -0.5475 -0.0125 0.0391</span>
+<span class="r-cm">#&gt; V4-V3 -0.70 -0.9675 -0.4325 0.0000</span></code></pre>
+
+        <h3>Reading the output</h3>
+        <ul>
+          <li><strong>V3 vs V1, V3 vs V2, V3 vs V4</strong>: V3 (BARI Gom 30) is significantly higher than every other variety.</li>
+          <li><strong>V2 vs V1</strong>: V2 is significantly higher than V1.</li>
+          <li><strong>V4 vs V2</strong>: V4 sits just below V2 (p = 0.04).</li>
+          <li><strong>V4 vs V1</strong>: not significantly different at 5% (p = 0.23).</li>
+        </ul>
+
+        <h3>Was blocking worthwhile? A formal check</h3>
+        <p>If the block F is large and its p value small, blocking captured real systematic variation. In our trial, the block F is 50.58 with p &lt; 0.001, so blocking was clearly justified.</p>
+
+        <div class="example-box">
+          <strong>Decision rule of thumb.</strong> If <code>F<sub>block</sub> &gt; 1</code> and small relative to F<sub>tab</sub>, blocking did not hurt but did not help much. If F<sub>block</sub> is much larger than F<sub>tab</sub>, blocking sharply increased the precision of the treatment test. If F<sub>block</sub> is below 1, the block structure might even have wasted degrees of freedom; in retrospect a CRD might have been cleaner.
+        </div>
+
+        <div class="practice" data-q="s8">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">If F<sub>block</sub> is much larger than F<sub>tab,block</sub>, it tells us that:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">The treatment effect is also significant</button>
+            <button class="practice-btn" data-correct="true">Blocking captured meaningful variation that would have inflated the error in a CRD</button>
+            <button class="practice-btn" data-correct="false">The error term is too large to trust the analysis</button>
+            <button class="practice-btn" data-correct="false">We need more replicates to draw any conclusion</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: Recap -->
+      <div class="slide" data-slide="9">
+        <h2>Recap</h2>
+        <p class="slide-subtitle">CRD plus one block term, the same workflow with two F tests instead of one.</p>
+
+        <h3>The recipe card</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Step</th><th>R recipe</th></tr></thead>
+          <tbody>
+            <tr><td>Build the data frame</td><td><code>data.frame(treat = factor(...), block = factor(...), y = ...)</code></td></tr>
+            <tr><td>Treatment and block totals</td><td><code>tapply(y, treat, sum)</code>, <code>tapply(y, block, sum)</code></td></tr>
+            <tr><td>Fit the ANOVA</td><td><code>aov(y ~ treat + block, data = df)</code></td></tr>
+            <tr><td>Two F tests in one table</td><td><code>summary(model)</code></td></tr>
+            <tr><td>Treatment and block effects</td><td><code>tapply(y, treat, mean) − mean(y)</code>; same with block</td></tr>
+            <tr><td>Model adequacy</td><td>QQ plot, residuals vs fitted, residuals vs run order</td></tr>
+            <tr><td>Pairwise comparison</td><td><code>TukeyHSD(model, "treat")</code></td></tr>
+            <tr><td>Check if blocking helped</td><td>Look at F<sub>block</sub>, compare to F<sub>tab,block</sub></td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>Next module (Module 7):</strong> the Latin Square Design extends RCBD by blocking out <em>two</em> nuisance factors at once with a p × p layout. Same logic, one more source of variation.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Gazipur textile dye trial 2024 (illustrative)</h2>
+    <p>An RCBD with 5 reactive dyes (D1, D2, D3, D4, D5) compared across 4 fabric batches (B1-B4). The dataset is at the top of Exercise 1; reuse it through the set.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 6">↺ Reset Progress</button>
+
+<script>
+const STORAGE_KEY = 'statcomp1-module6-progress-v1';
+const state = {
+  currentSlide: 1, totalSlides: 9, maxSlideReached: 1,
+  quizAnswers: {}, quizScore: null, quizSubmitted: false,
+  flashcardsFlipped: new Set(), exercisesOpened: new Set(),
+  exerciseAnswers: {}, practiceAnswers: {}
+};
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, flashcardsFlipped: [...state.flashcardsFlipped], exercisesOpened: [...state.exercisesOpened] })); } catch (e) {} }
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => { if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1); });
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct ? '✓ Correct!' : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const exercises = [
+  { title: "1. Build the dye trial data frame", diff: "easy",
+    prompt: "A Gazipur textile factory tested 5 reactive dyes (D1, D2, D3, D4, D5) on color fastness score (1-10, higher is better) across 4 fabric batches (B1-B4), one observation per (dye, batch) cell. Type the data into R as a data frame <code>dye</code> with both <code>dye</code> and <code>batch</code> as factors.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>dye:   D1 D2 D3 D4 D5 D1 D2 D3 D4 D5 D1 D2 D3 D4 D5 D1 D2 D3 D4 D5\nbatch: B1 B1 B1 B1 B1 B2 B2 B2 B2 B2 B3 B3 B3 B3 B3 B4 B4 B4 B4 B4\nfast:  5.8 7.4 5.1 8.2 6.8 6.2 7.8 5.4 8.5 7.0 6.4 8.1 5.7 8.9 7.4 6.7 8.4 6.0 9.2 7.7</code>",
+    hint: "Use rep() for dye and batch, then data.frame() with factor().",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>d_dye   <- rep(c(\"D1\",\"D2\",\"D3\",\"D4\",\"D5\"), times = 4)\nd_batch <- rep(c(\"B1\",\"B2\",\"B3\",\"B4\"), each = 5)\nfast    <- c(5.8,7.4,5.1,8.2,6.8, 6.2,7.8,5.4,8.5,7.0,\n             6.4,8.1,5.7,8.9,7.4, 6.7,8.4,6.0,9.2,7.7)\ndye <- data.frame(dye = factor(d_dye), batch = factor(d_batch), fast)\nstr(dye)</pre>" },
+  { title: "2. Manual ANOVA, the full table", diff: "med",
+    prompt: "Compute the full ANOVA table by hand: CF, SST, SS<sub>dye</sub>, SS<sub>batch</sub>, SSE, all df, mean squares, and both F statistics. Round to three decimals.",
+    hint: "a = 5 dyes, b = 4 batches, N = 20. df<sub>error</sub> = (a − 1)(b − 1) = 12. Use tapply for the totals.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>a <- 5; b <- 4; N <- a * b\nCF      <- sum(dye$fast)^2 / N\nSST     <- sum(dye$fast^2) - CF\nT_tot   <- tapply(dye$fast, dye$dye, sum)\nB_tot   <- tapply(dye$fast, dye$batch, sum)\nSS_dye  <- sum(T_tot^2) / b - CF\nSS_bat  <- sum(B_tot^2) / a - CF\nSSE     <- SST - SS_dye - SS_bat\n\ndf_dye <- a - 1; df_bat <- b - 1; df_e <- (a - 1) * (b - 1)\nMS_dye <- SS_dye / df_dye\nMS_bat <- SS_bat / df_bat\nMSE    <- SSE / df_e\nF_dye  <- MS_dye / MSE\nF_bat  <- MS_bat / MSE\n\nc(SS_dye = SS_dye, SS_bat = SS_bat, SSE = SSE,\n        F_dye = F_dye, F_bat = F_bat)\n# Typical values: F_dye around 100+, F_bat around 8-15.</pre>" },
+  { title: "3. The same model via aov()", diff: "easy",
+    prompt: "Fit the RCBD with <code>aov()</code>, print the ANOVA summary, and report the F statistic and p value for the dye factor.",
+    hint: "aov(fast ~ dye + batch, data = dye); summary(model).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>model <- aov(fast ~ dye + batch, data = dye)\nsummary(model)\n#             Df Sum Sq Mean Sq F value   Pr(>F)\n# dye          4 33.... 8....   ...      < 2e-16 ***\n# batch        3  1....  0....   ...     ~ 0.001\n# Residuals   12  ...    ...\n\n# F_dye is highly significant: at least one dye differs in fastness.</pre>" },
+  { title: "4. Treatment and batch effect estimates", diff: "med",
+    prompt: "Compute the estimated dye effects τ̂<sub>i</sub> and batch effects β̂<sub>j</sub> as deviations from the grand mean. Verify that each set sums to zero (within floating point precision).",
+    hint: "tapply(fast, dye, mean) − mean(fast) for τ̂. Same with batch for β̂.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>grand <- mean(dye$fast)\ntau_hat  <- tapply(dye$fast, dye$dye,   mean) - grand\nbeta_hat <- tapply(dye$fast, dye$batch, mean) - grand\ntau_hat\nbeta_hat\nsum(tau_hat)   # 0\nsum(beta_hat)   # 0\n\n# Largest positive tau is D4 (best dye for fastness),\n# largest negative is D3.</pre>" },
+  { title: "5. Model adequacy, three plots", diff: "med",
+    prompt: "Draw the three diagnostic plots: QQ plot of residuals, residuals vs fitted, and residuals vs run order. Comment in one sentence per plot.",
+    hint: "residuals(model), fitted(model), seq_along(residuals(model)) for run order.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>res <- residuals(model)\nfit <- fitted(model)\n\npar(mfrow = c(1, 3))\nqqnorm(res); qqline(res, col = \"red\")\nplot(fit, res, xlab = \"Fitted\", ylab = \"Residuals\")\nabline(h = 0, lty = 2)\nplot(seq_along(res), res, type = \"b\")\nabline(h = 0, lty = 2)\npar(mfrow = c(1, 1))\n\n# Look for: points near the QQ line, flat band around zero,\n# random scatter in run order.</pre>" },
+  { title: "6. Tukey HSD on dyes, identify the best", diff: "med",
+    prompt: "Run <code>TukeyHSD()</code> on the dye factor at 95% family wise confidence. Recommend the best dye for fastness.",
+    hint: "TukeyHSD(model, \"dye\").",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>TukeyHSD(model, \"dye\", conf.level = 0.95)\n\n# D4 has the highest mean fastness (~8.7),\n# significantly higher than every other dye (all p adj < 0.001).\n# Recommend D4 for production. D2 is a clear second choice.</pre>" },
+  { title: "7. Was blocking on batch worthwhile?", diff: "hard",
+    prompt: "Compare the RCBD analysis to what you would have gotten as a CRD (no batch term). Recompute the dye F statistic ignoring batches and explain in two sentences whether blocking helped.",
+    hint: "Refit with aov(fast ~ dye, data = dye), look at F. Then compare to F<sub>dye</sub> from the RCBD.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>model_crd <- aov(fast ~ dye, data = dye)\nsummary(model_crd)\n# Dye F dropped because batch variation now hides in error term.\n# Both F values remain highly significant here, but the RCBD\n# version is more precise. In a smaller experiment, this\n# precision gain could be the difference between rejecting and\n# failing to reject H0 for dyes.</pre>" }
+];
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `<div class="exercise-head"><h4>${ex.title}</h4><span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span></div><div class="exercise-prompt">${ex.prompt}</div><textarea placeholder="Write your R code here..." data-ex="${i}"></textarea><div class="exercise-actions"><button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button><button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button><span class="save-indicator" data-ex="${i}"></span></div><div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div><div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>`;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 6? Your slide position and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+loadState();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => { b.classList.add('disabled'); if (b.dataset.correct === 'true') b.classList.add('correct'); });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>
