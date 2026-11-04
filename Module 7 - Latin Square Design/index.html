@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 7: Latin Square Design</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --muted: #64748b;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+  --accent: #4f46e5; --success: #059669; --success-light: #d1fae5;
+  --danger: #dc2626; --danger-light: #fee2e2; --warning: #d97706; --warning-light: #fef3c7;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+
+header.lecture-header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; padding: 32px 28px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+header.lecture-header::before { content: ""; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+header.lecture-header::after { content: ""; position: absolute; bottom: -30px; right: 80px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+header.lecture-header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; position: relative; z-index: 1; }
+header.lecture-header h1 { font-size: 28px; margin: 12px 0 8px; font-weight: 700; position: relative; z-index: 1; }
+header.lecture-header p.instructor { font-size: 13px; opacity: 0.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); max-width: 720px; position: relative; z-index: 1; }
+header.lecture-header p.instructor strong { font-weight: 700; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 14px; background: white; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.stat { text-align: center; padding: 6px; }
+.stat .stat-value { font-size: 22px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+
+.tabs { display: flex; gap: 4px; background: white; padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn { flex: 1; min-width: 110px; padding: 11px 16px; background: transparent; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all var(--transition); font-family: inherit; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.tab-content { display: none; animation: fadeIn 0.28s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+.progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+.slide-counter { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
+.slide { display: none; min-height: 420px; padding: 4px; animation: slideIn 0.3s ease; }
+.slide.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.slide h2 { font-size: 26px; margin-bottom: 6px; color: var(--primary-dark); font-weight: 700; line-height: 1.25; }
+.slide h3 { font-size: 18px; margin: 22px 0 10px; color: var(--text); font-weight: 600; }
+.slide p { margin-bottom: 12px; color: #334155; }
+.slide ul, .slide ol { margin: 0 0 14px 22px; }
+.slide li { margin-bottom: 6px; color: #334155; }
+.slide .slide-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 18px; font-style: italic; }
+
+.example-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.example-box strong { color: var(--primary-dark); }
+.tip-box { background: var(--success-light); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.tip-box strong { color: var(--success); }
+.warn-box { background: var(--warning-light); border-left: 4px solid var(--warning); padding: 16px 20px; border-radius: var(--radius-sm); margin: 16px 0; }
+.warn-box strong { color: var(--warning); }
+.formula-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 20px; border-radius: var(--radius-sm); margin: 14px 0; font-size: 16px; text-align: center; color: #4c1d95; font-weight: 500; }
+.formula-box strong { color: #5b21b6; }
+
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; color: #be185d; }
+pre { background: #1e293b; color: #e2e8f0; padding: 16px 18px; border-radius: var(--radius-sm); overflow-x: auto; margin: 12px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; }
+pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.r-kw { color: #7dd3fc; font-weight: 600; }
+.r-str { color: #fdba74; }
+.r-num { color: #86efac; }
+.r-cm { color: #94a3b8; font-style: italic; }
+.r-func { color: #f9a8d4; }
+.r-op { color: #fcd34d; font-weight: 600; }
+
+table.data-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; box-shadow: var(--shadow); border-radius: var(--radius-sm); overflow: hidden; }
+table.data-table th { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+table.data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); background: white; }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: #f8fafc; }
+table.data-table tr:hover td { background: var(--primary-light); }
+table.data-table .hl { background: #fef3c7 !important; }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data-table th.num { text-align: right; }
+table.data-table.compact th, table.data-table.compact td { padding: 6px 9px; font-size: 12px; }
+table.latin-square { width: auto; margin: 14px auto; }
+table.latin-square td { text-align: center; padding: 12px 16px; }
+table.latin-square td.A { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+table.latin-square td.B { background: #d1fae5; color: #059669; font-weight: 700; }
+table.latin-square td.C { background: #fef3c7; color: #b45309; font-weight: 700; }
+table.latin-square td.D { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+table.latin-square td.E { background: #f5f3ff; color: #6d28d9; font-weight: 700; }
+
+.slide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.28); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.key-hint { font-size: 12px; color: var(--muted); }
+
+.practice { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 18px; margin: 18px 0; }
+.practice h4 { color: var(--primary); margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.practice-q { margin-bottom: 10px; color: var(--text); font-weight: 500; }
+.practice-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.practice-btn { padding: 8px 14px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all var(--transition); color: var(--text); }
+.practice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.practice-btn.correct { background: var(--success-light); border-color: var(--success); color: var(--success); font-weight: 600; }
+.practice-btn.wrong { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+.practice-btn.disabled { pointer-events: none; opacity: 0.75; }
+.practice-feedback { margin-top: 10px; padding: 10px 14px; border-radius: 6px; font-size: 14px; display: none; animation: fadeIn 0.2s; }
+.practice-feedback.show { display: block; }
+.practice-feedback.right { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+.practice-feedback.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+
+
+
+.exercises-header { background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+.exercises-header h2 { color: var(--primary-dark); margin-bottom: 6px; }
+.exercises-header p { color: var(--muted); font-size: 14px; }
+.exercise { background: white; border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); }
+.exercise-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.exercise h4 { font-size: 16px; color: var(--primary-dark); font-weight: 600; }
+.exercise .diff { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+.exercise .diff.easy { background: var(--success-light); color: var(--success); }
+.exercise .diff.med { background: var(--warning-light); color: var(--warning); }
+.exercise .diff.hard { background: var(--danger-light); color: var(--danger); }
+.exercise-prompt { color: #334155; margin: 8px 0 12px; }
+.exercise textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; resize: vertical; background: #f8fafc; color: var(--text); transition: border-color var(--transition); }
+.exercise textarea:focus { outline: none; border-color: var(--primary); background: white; }
+.exercise-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.exercise-hint, .exercise-approach { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13.5px; }
+.exercise-hint { background: var(--warning-light); border-left: 3px solid var(--warning); color: #78350f; }
+.exercise-approach { background: #eff6ff; border-left: 3px solid var(--primary); color: #1e3a8a; }
+.exercise-hint.show, .exercise-approach.show { display: block; animation: fadeIn 0.25s; }
+.save-indicator { font-size: 12px; color: var(--muted); margin-left: auto; }
+.save-indicator.saved { color: var(--success); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.objectives-list { list-style: none; padding: 0; margin: 10px 0 0; }
+.objectives-list li { padding: 8px 0 8px 30px; position: relative; color: #334155; }
+.objectives-list li::before { content: "✓"; position: absolute; left: 0; top: 10px; color: var(--success); font-weight: bold; background: var(--success-light); width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 11px; color: var(--text); }
+
+.reset-btn { position: fixed; bottom: 18px; right: 18px; background: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; transition: all var(--transition); z-index: 100; }
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+@media (max-width: 720px) {
+  .app { padding: 14px 12px 80px; }
+  header.lecture-header { padding: 22px 18px; }
+  header.lecture-header h1 { font-size: 22px; }
+  .card { padding: 20px 18px; }
+  table.data-table { font-size: 12px; }
+  table.data-table th, table.data-table td { padding: 7px 9px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .slide h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="lecture-header">
+  <span class="badge">ISRT • AST 232 • Module 7</span>
+  <h1>Latin Square Design (LSD) in R</h1>
+  <p class="instructor">Instructor: <strong>K.M. Tanvir</strong> • Institute of Statistical Research and Training (ISRT), University of Dhaka</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-value" id="progStat">0%</div><div class="stat-label">Slides Viewed</div></div>
+  <div class="stat"><div class="stat-value" id="exStat">0</div><div class="stat-label">Exercises Worked</div></div>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="slides">📖 Slides</button>
+  <button class="tab-btn" data-tab="exercises">💪 Exercises</button>
+</nav>
+
+<main>
+<section id="slides" class="tab-content active">
+  <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+  <div class="slide-counter" id="slideCounter">Slide 1 of 9</div>
+  <div class="card">
+    <div id="slidesContainer">
+
+      <!-- SLIDE 1: Welcome + description -->
+      <div class="slide active" data-slide="1">
+        <h2>Welcome to Module 7</h2>
+        <p>The Latin Square Design (LSD) extends RCBD by blocking out <em>two</em> nuisance factors at once. The result is a square layout in which each treatment appears exactly once in each row and exactly once in each column.</p>
+
+        <h3>When to use a Latin Square</h3>
+        <ul>
+          <li>You have a single factor with <strong>p levels</strong> (the treatments) whose effect you want to estimate.</li>
+          <li>You can identify <strong>two known sources of variability</strong> beyond the treatment itself: a row factor and a column factor.</li>
+          <li>You can lay out the experiment in a <strong>p × p grid</strong> so that each treatment appears once per row and once per column.</li>
+        </ul>
+
+        <h3>Why bother</h3>
+        <p>RCBD removes one nuisance factor from the error term. LSD removes two. If both nuisance factors really matter, this further sharpens the F test for treatments. The trade off is that LSD requires the number of treatments to equal the number of rows and the number of columns.</p>
+
+        <h3>What you will be able to do by the end of this lab</h3>
+        <ul class="objectives-list">
+          <li>Recognise when a Latin Square is more appropriate than an RCBD</li>
+          <li>Construct a p × p Latin Square and randomise it correctly</li>
+          <li>Write the LSD linear model and the three F tests it supports</li>
+          <li>Compute the full ANOVA table by hand with four sources of variation</li>
+          <li>Fit the same model with <code>aov(y ~ treat + row + column, data = df)</code></li>
+          <li>Estimate treatment effects and run pairwise comparisons with Tukey HSD</li>
+        </ul>
+      </div>
+
+      <!-- SLIDE 2: Constructing + randomisation -->
+      <div class="slide" data-slide="2">
+        <h2>Constructing a Latin Square</h2>
+        <p class="slide-subtitle">Every treatment exactly once per row and exactly once per column.</p>
+
+        <h3>A 4 × 4 Latin Square, the standard generator</h3>
+        <table class="data-table latin-square">
+          <thead>
+            <tr><th></th><th>Col 1</th><th>Col 2</th><th>Col 3</th><th>Col 4</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Row 1</th><td class="A">A</td><td class="B">B</td><td class="C">C</td><td class="D">D</td></tr>
+            <tr><th>Row 2</th><td class="B">B</td><td class="C">C</td><td class="D">D</td><td class="A">A</td></tr>
+            <tr><th>Row 3</th><td class="C">C</td><td class="D">D</td><td class="A">A</td><td class="B">B</td></tr>
+            <tr><th>Row 4</th><td class="D">D</td><td class="A">A</td><td class="B">B</td><td class="C">C</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Randomisation procedure, three steps</h3>
+        <p>Just like RCBD, the Latin Square has <strong>restricted randomisation</strong>: we cannot assign treatments freely because the row and column constraints must hold. The standard recipe is:</p>
+        <ol>
+          <li><strong>Randomly select a generating design</strong> from the set of standard p × p Latin Squares.</li>
+          <li><strong>Randomly permute the p columns</strong>.</li>
+          <li><strong>Randomly permute the last p − 1 rows</strong> (leaving the first row fixed).</li>
+        </ol>
+        <p>Then assign the treatment letters A, B, C, ... to the actual experimental treatments at random.</p>
+
+<pre><code><span class="r-cm"># Quick R sketch of the randomisation idea for a 4x4 LSD</span>
+<span class="r-func">set.seed</span>(<span class="r-num">232</span>)
+
+base <span class="r-op">&lt;-</span> <span class="r-func">matrix</span>(<span class="r-func">c</span>(<span class="r-str">"A"</span>,<span class="r-str">"B"</span>,<span class="r-str">"C"</span>,<span class="r-str">"D"</span>,
+                 <span class="r-str">"B"</span>,<span class="r-str">"C"</span>,<span class="r-str">"D"</span>,<span class="r-str">"A"</span>,
+                 <span class="r-str">"C"</span>,<span class="r-str">"D"</span>,<span class="r-str">"A"</span>,<span class="r-str">"B"</span>,
+                 <span class="r-str">"D"</span>,<span class="r-str">"A"</span>,<span class="r-str">"B"</span>,<span class="r-str">"C"</span>),
+               nrow <span class="r-op">=</span> <span class="r-num">4</span>, byrow <span class="r-op">=</span> <span class="r-kw">TRUE</span>)
+
+col_perm <span class="r-op">&lt;-</span> <span class="r-func">sample</span>(<span class="r-num">1</span><span class="r-op">:</span><span class="r-num">4</span>)                    <span class="r-cm"># permute columns</span>
+row_perm <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">1</span>, <span class="r-num">1</span> <span class="r-op">+</span> <span class="r-func">sample</span>(<span class="r-num">1</span><span class="r-op">:</span><span class="r-num">3</span>))         <span class="r-cm"># first row fixed</span>
+square <span class="r-op">&lt;-</span> base[row_perm, col_perm]
+square</code></pre>
+
+        <div class="tip-box">
+          <strong>Real example.</strong> An agronomist runs four tea varieties in a Sylhet plantation. The slope (rows) and the prevailing wind direction (columns) both affect yield. A 4 × 4 Latin Square gives each variety one plot at each slope position <em>and</em> one plot at each wind exposure, so neither nuisance factor confounds the variety comparison.
+        </div>
+      </div>
+
+      <!-- SLIDE 3: Model + hypothesis -->
+      <div class="slide" data-slide="3">
+        <h2>The Linear Model and Three F Tests</h2>
+
+        <h3>Fixed effects model for LSD</h3>
+        <div class="formula-box">
+          y<sub>ijk</sub> &nbsp;=&nbsp; &mu; &nbsp;+&nbsp; &alpha;<sub>i</sub> &nbsp;+&nbsp; &beta;<sub>j</sub> &nbsp;+&nbsp; &tau;<sub>k</sub> &nbsp;+&nbsp; &epsilon;<sub>ijk</sub>
+        </div>
+        <p style="text-align: center;">i = 1, ..., p rows; j = 1, ..., p columns; k = 1, ..., p treatments. Exactly one observation per (i, j) cell.</p>
+
+        <ul>
+          <li><code>&mu;</code>: overall grand mean.</li>
+          <li><code>&alpha;<sub>i</sub></code>: row effect (first nuisance factor).</li>
+          <li><code>&beta;<sub>j</sub></code>: column effect (second nuisance factor).</li>
+          <li><code>&tau;<sub>k</sub></code>: treatment effect (the question of interest).</li>
+          <li><code>&epsilon;<sub>ijk</sub></code>: random error, iid Normal(0, &sigma;<sup>2</sup>).</li>
+        </ul>
+
+        <h3>Three null hypotheses</h3>
+        <div class="example-box">
+          <strong>For treatments:</strong> H<sub>0</sub><sup>(T)</sup>: all &tau;<sub>k</sub> = 0 &nbsp;&nbsp;(the question of interest)<br>
+          <strong>For rows:</strong> H<sub>0</sub><sup>(R)</sup>: all &alpha;<sub>i</sub> = 0 &nbsp;&nbsp;(blocking check)<br>
+          <strong>For columns:</strong> H<sub>0</sub><sup>(C)</sup>: all &beta;<sub>j</sub> = 0 &nbsp;&nbsp;(blocking check)
+        </div>
+
+        <h3>Degrees of freedom budget</h3>
+        <ul>
+          <li>df<sub>row</sub> = p − 1</li>
+          <li>df<sub>col</sub> = p − 1</li>
+          <li>df<sub>treat</sub> = p − 1</li>
+          <li>df<sub>error</sub> = (p − 1)(p − 2)</li>
+          <li>df<sub>total</sub> = N − 1 = p<sup>2</sup> − 1</li>
+        </ul>
+        <p>For p = 4: df_row = 3, df_col = 3, df_treat = 3, df_error = 6, df_total = 15. Sum check: 3 + 3 + 3 + 6 = 15 ✓</p>
+
+        <div class="warn-box">
+          <strong>Small p means small error df.</strong> A 3 × 3 Latin Square has only df_error = 2, too few for a reliable F test. A 4 × 4 has df_error = 6, the practical minimum. For p ≥ 5 the error term has comfortable degrees of freedom.
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Working dataset -->
+      <div class="slide" data-slide="4">
+        <h2>Our Working Dataset</h2>
+        <p class="slide-subtitle">Sylhet tea variety trial 2024, a 4 × 4 Latin Square.</p>
+
+        <p>Four tea varieties (A, B, C, D) tested on a 4 × 4 plantation grid. Rows capture the slope position (Row 1 = highest, Row 4 = lowest). Columns capture wind exposure (Col 1 = windward, Col 4 = leeward). The response is leaf yield in kg per plot.</p>
+
+        <h3>The layout</h3>
+        <table class="data-table latin-square">
+          <thead>
+            <tr><th></th><th>Col 1</th><th>Col 2</th><th>Col 3</th><th>Col 4</th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Row 1</th><td class="A">A = 3.80</td><td class="B">B = 4.95</td><td class="C">C = 5.15</td><td class="D">D = 4.30</td></tr>
+            <tr><th>Row 2</th><td class="B">B = 4.75</td><td class="C">C = 5.55</td><td class="D">D = 4.50</td><td class="A">A = 4.85</td></tr>
+            <tr><th>Row 3</th><td class="C">C = 5.45</td><td class="D">D = 5.10</td><td class="A">A = 4.95</td><td class="B">B = 5.30</td></tr>
+            <tr><th>Row 4</th><td class="D">D = 4.65</td><td class="A">A = 5.10</td><td class="B">B = 5.60</td><td class="C">C = 5.95</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Type the data into R</h3>
+<pre><code><span class="r-cm"># Sylhet tea Latin Square 2024 (illustrative figures)</span>
+row    <span class="r-op">&lt;-</span> <span class="r-func">factor</span>(<span class="r-func">rep</span>(<span class="r-num">1</span><span class="r-op">:</span><span class="r-num">4</span>, each <span class="r-op">=</span> <span class="r-num">4</span>))
+column <span class="r-op">&lt;-</span> <span class="r-func">factor</span>(<span class="r-func">rep</span>(<span class="r-num">1</span><span class="r-op">:</span><span class="r-num">4</span>, times <span class="r-op">=</span> <span class="r-num">4</span>))
+
+trt    <span class="r-op">&lt;-</span> <span class="r-func">factor</span>(<span class="r-func">c</span>(<span class="r-str">"A"</span>, <span class="r-str">"B"</span>, <span class="r-str">"C"</span>, <span class="r-str">"D"</span>,
+                  <span class="r-str">"B"</span>, <span class="r-str">"C"</span>, <span class="r-str">"D"</span>, <span class="r-str">"A"</span>,
+                  <span class="r-str">"C"</span>, <span class="r-str">"D"</span>, <span class="r-str">"A"</span>, <span class="r-str">"B"</span>,
+                  <span class="r-str">"D"</span>, <span class="r-str">"A"</span>, <span class="r-str">"B"</span>, <span class="r-str">"C"</span>))
+
+yield <span class="r-op">&lt;-</span> <span class="r-func">c</span>(<span class="r-num">3.80</span>, <span class="r-num">4.95</span>, <span class="r-num">5.15</span>, <span class="r-num">4.30</span>,
+            <span class="r-num">4.75</span>, <span class="r-num">5.55</span>, <span class="r-num">4.50</span>, <span class="r-num">4.85</span>,
+            <span class="r-num">5.45</span>, <span class="r-num">5.10</span>, <span class="r-num">4.95</span>, <span class="r-num">5.30</span>,
+            <span class="r-num">4.65</span>, <span class="r-num">5.10</span>, <span class="r-num">5.60</span>, <span class="r-num">5.95</span>)
+
+tea <span class="r-op">&lt;-</span> <span class="r-func">data.frame</span>(row, column, trt, yield)</code></pre>
+
+        <h3>Marginal totals at a glance</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Source</th><th class="num">Total 1</th><th class="num">Total 2</th><th class="num">Total 3</th><th class="num">Total 4</th><th class="num">Grand</th></tr></thead>
+          <tbody>
+            <tr><td>Row sums</td><td class="num">18.20</td><td class="num">19.65</td><td class="num">20.80</td><td class="num">21.30</td><td class="num">79.95</td></tr>
+            <tr><td>Column sums</td><td class="num">18.65</td><td class="num">20.70</td><td class="num">20.20</td><td class="num">20.40</td><td class="num">79.95</td></tr>
+            <tr><td>Treatment sums (A, B, C, D)</td><td class="num">18.70</td><td class="num">20.60</td><td class="num">22.10</td><td class="num">18.55</td><td class="num">79.95</td></tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <strong>Three sanity checks at once.</strong> All three marginal totals (rows, columns, treatments) must add up to the same grand total. Above, every row sums to 79.95. If any did not, there is a typo in the data.
+        </div>
+      </div>
+
+      <!-- SLIDE 5: Manual ANOVA -->
+      <div class="slide" data-slide="5">
+        <h2>Manual ANOVA Decomposition</h2>
+        <p>With p = 4, N = p<sup>2</sup> = 16. Total variation splits into four pieces: rows, columns, treatments, and error.</p>
+
+        <div class="formula-box">
+          CF &nbsp;=&nbsp; G<sup>2</sup> / N<br>
+          SS<sub>total</sub> &nbsp;=&nbsp; &Sigma; y<sup>2</sup> &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>row</sub> &nbsp;=&nbsp; &Sigma; R<sub>i</sub><sup>2</sup> / p &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>col</sub> &nbsp;=&nbsp; &Sigma; C<sub>j</sub><sup>2</sup> / p &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>treat</sub> &nbsp;=&nbsp; &Sigma; T<sub>k</sub><sup>2</sup> / p &nbsp;&minus;&nbsp; CF<br>
+          SS<sub>error</sub> &nbsp;=&nbsp; SS<sub>total</sub> &nbsp;&minus;&nbsp; SS<sub>row</sub> &nbsp;&minus;&nbsp; SS<sub>col</sub> &nbsp;&minus;&nbsp; SS<sub>treat</sub>
+        </div>
+
+        <h3>Compute it in R</h3>
+<pre><code>p <span class="r-op">&lt;-</span> <span class="r-num">4</span>; N <span class="r-op">&lt;-</span> p<span class="r-op">^</span><span class="r-num">2</span>
+
+CF       <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(tea<span class="r-op">$</span>yield)<span class="r-op">^</span><span class="r-num">2</span> <span class="r-op">/</span> N
+SST      <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(tea<span class="r-op">$</span>yield<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">-</span> CF
+
+R_tot    <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>row,    sum)
+C_tot    <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>column, sum)
+T_tot    <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>trt,    sum)
+
+SS_row   <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(R_tot<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> p <span class="r-op">-</span> CF
+SS_col   <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(C_tot<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> p <span class="r-op">-</span> CF
+SS_treat <span class="r-op">&lt;-</span> <span class="r-func">sum</span>(T_tot<span class="r-op">^</span><span class="r-num">2</span>) <span class="r-op">/</span> p <span class="r-op">-</span> CF
+SSE      <span class="r-op">&lt;-</span> SST <span class="r-op">-</span> SS_row <span class="r-op">-</span> SS_col <span class="r-op">-</span> SS_treat
+
+df_each  <span class="r-op">&lt;-</span> p <span class="r-op">-</span> <span class="r-num">1</span>            <span class="r-cm"># 3 for row, col, treat</span>
+df_error <span class="r-op">&lt;-</span> (p <span class="r-op">-</span> <span class="r-num">1</span>) <span class="r-op">*</span> (p <span class="r-op">-</span> <span class="r-num">2</span>)  <span class="r-cm"># 6</span>
+
+MS_row   <span class="r-op">&lt;-</span> SS_row   <span class="r-op">/</span> df_each
+MS_col   <span class="r-op">&lt;-</span> SS_col   <span class="r-op">/</span> df_each
+MS_treat <span class="r-op">&lt;-</span> SS_treat <span class="r-op">/</span> df_each
+MSE      <span class="r-op">&lt;-</span> SSE      <span class="r-op">/</span> df_error
+
+F_row    <span class="r-op">&lt;-</span> MS_row   <span class="r-op">/</span> MSE
+F_col    <span class="r-op">&lt;-</span> MS_col   <span class="r-op">/</span> MSE
+F_treat  <span class="r-op">&lt;-</span> MS_treat <span class="r-op">/</span> MSE
+
+<span class="r-func">c</span>(SS_row <span class="r-op">=</span> SS_row, SS_col <span class="r-op">=</span> SS_col,
+        SS_treat <span class="r-op">=</span> SS_treat, SSE <span class="r-op">=</span> SSE,
+        F_row <span class="r-op">=</span> F_row, F_col <span class="r-op">=</span> F_col, F_treat <span class="r-op">=</span> F_treat)
+<span class="r-cm">#&gt; SS_row  SS_col SS_treat   SSE  F_row  F_col F_treat </span>
+<span class="r-cm">#&gt;  1.423   0.628    2.140 0.101  28.15  12.42   42.35</span></code></pre>
+
+        <p>F<sub>tab</sub> at α = 0.05 is <code>qf(0.95, 3, 6) = 4.757</code> for all three tests. All three calculated F values exceed it, so all three nulls are rejected.</p>
+
+        <div class="practice" data-q="s5">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">In a 5 × 5 Latin Square the error degrees of freedom equal:</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">4</button>
+            <button class="practice-btn" data-correct="false">10</button>
+            <button class="practice-btn" data-correct="true">12</button>
+            <button class="practice-btn" data-correct="false">20</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: aov() -->
+      <div class="slide" data-slide="6">
+        <h2>One Line ANOVA with aov()</h2>
+        <p>The entire decomposition collapses to one model with three additive factors on the right hand side.</p>
+
+<pre><code>model <span class="r-op">&lt;-</span> <span class="r-func">aov</span>(yield <span class="r-op">~</span> trt <span class="r-op">+</span> row <span class="r-op">+</span> column, data <span class="r-op">=</span> tea)
+<span class="r-func">summary</span>(model)
+<span class="r-cm">#&gt;             Df Sum Sq Mean Sq F value   Pr(&gt;F)    </span>
+<span class="r-cm">#&gt; trt          3  2.140  0.7135   42.35  0.00019 ***</span>
+<span class="r-cm">#&gt; row          3  1.423  0.4743   28.15  0.00064 ***</span>
+<span class="r-cm">#&gt; column       3  0.628  0.2093   12.42  0.00557 ** </span>
+<span class="r-cm">#&gt; Residuals    6  0.101  0.0168                     </span></code></pre>
+
+        <h3>The full LSD ANOVA table</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Source</th><th class="num">df</th><th class="num">SS</th><th class="num">MS</th><th class="num">F</th><th class="num">p value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Treatment (variety)</td><td class="num">3</td><td class="num">2.140</td><td class="num">0.714</td><td class="num">42.35</td><td class="num">&lt; 0.001</td></tr>
+            <tr><td>Row (slope)</td><td class="num">3</td><td class="num">1.423</td><td class="num">0.474</td><td class="num">28.15</td><td class="num">&lt; 0.001</td></tr>
+            <tr><td>Column (wind exposure)</td><td class="num">3</td><td class="num">0.628</td><td class="num">0.209</td><td class="num">12.42</td><td class="num">0.006</td></tr>
+            <tr><td>Error</td><td class="num">6</td><td class="num">0.101</td><td class="num">0.017</td><td class="num"></td><td class="num"></td></tr>
+            <tr class="hl"><td><strong>Total</strong></td><td class="num"><strong>15</strong></td><td class="num"><strong>4.292</strong></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>How to read it.</strong> Variety has a clear effect on yield (F = 42.4, p &lt; 0.001). Both nuisance factors are also significant: slope (F = 28.2) and wind exposure (F = 12.4). All three blocking checks confirm the Latin Square layout was the right choice for this experiment.
+        </div>
+
+        <h3>Was the Latin Square worth it?</h3>
+        <p>If we had ignored both blocking factors and run this as a CRD, the row and column sums of squares (1.423 + 0.628 = 2.051) would have been pooled into the error. The treatment F would have dropped from <strong>42.4</strong> to roughly <strong>4.4</strong>, near the borderline. Blocking on both slope and wind exposure roughly <em>10×</em> the precision of the variety test.</p>
+      </div>
+
+      <!-- SLIDE 7: Effects + adequacy -->
+      <div class="slide" data-slide="7">
+        <h2>Effect Estimates and Model Adequacy</h2>
+
+        <h3>Estimated effects</h3>
+        <p>Each effect is the corresponding sample mean minus the grand mean.</p>
+
+<pre><code>grand_mean <span class="r-op">&lt;-</span> <span class="r-func">mean</span>(tea<span class="r-op">$</span>yield)                  <span class="r-cm"># 4.997</span>
+treat_mean <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>trt,    mean)
+row_mean   <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>row,    mean)
+col_mean   <span class="r-op">&lt;-</span> <span class="r-func">tapply</span>(tea<span class="r-op">$</span>yield, tea<span class="r-op">$</span>column, mean)
+
+tau_hat   <span class="r-op">&lt;-</span> treat_mean <span class="r-op">-</span> grand_mean
+alpha_hat <span class="r-op">&lt;-</span> row_mean   <span class="r-op">-</span> grand_mean
+beta_hat  <span class="r-op">&lt;-</span> col_mean   <span class="r-op">-</span> grand_mean
+
+<span class="r-func">cbind</span>(treat_mean, tau_hat)
+<span class="r-cm">#&gt;   treat_mean tau_hat</span>
+<span class="r-cm">#&gt; A      4.675  -0.322</span>
+<span class="r-cm">#&gt; B      5.150   0.153</span>
+<span class="r-cm">#&gt; C      5.525   0.528</span>
+<span class="r-cm">#&gt; D      4.638  -0.359</span></code></pre>
+
+        <div class="example-box">
+          <strong>Reading the treatment effects.</strong> Variety C is the best at +0.53 above the grand mean, followed by B at +0.15. A and D both sit roughly 0.3 below the grand mean. Row effects (slope) grow steadily from Row 1 to Row 4. Column effects show that the windward column (Col 1) is the worst, with the leeward side better.
+        </div>
+
+        <h3>Model adequacy, the same three checks</h3>
+<pre><code>res <span class="r-op">&lt;-</span> <span class="r-func">residuals</span>(model)
+fit <span class="r-op">&lt;-</span> <span class="r-func">fitted</span>(model)
+
+<span class="r-func">qqnorm</span>(res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>)
+<span class="r-func">qqline</span>(res, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>, lwd <span class="r-op">=</span> <span class="r-num">2</span>)
+
+<span class="r-func">plot</span>(fit, res, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Fitted"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)
+
+<span class="r-func">plot</span>(<span class="r-func">seq_along</span>(res), res, type <span class="r-op">=</span> <span class="r-str">"b"</span>, pch <span class="r-op">=</span> <span class="r-num">19</span>, col <span class="r-op">=</span> <span class="r-str">"#2563eb"</span>,
+     xlab <span class="r-op">=</span> <span class="r-str">"Run order"</span>, ylab <span class="r-op">=</span> <span class="r-str">"Residuals"</span>)
+<span class="r-func">abline</span>(h <span class="r-op">=</span> <span class="r-num">0</span>, lty <span class="r-op">=</span> <span class="r-num">2</span>, col <span class="r-op">=</span> <span class="r-str">"#dc2626"</span>)</code></pre>
+
+        <div class="warn-box">
+          <strong>Small p, small df_error.</strong> With only 6 error degrees of freedom in a 4 × 4 square, diagnostic plots are noisy. A QQ plot with 16 points cannot tell us much about the tails. Treat the assumption checks as a sanity pass, not a definitive test, when p is small.
+        </div>
+      </div>
+
+      <!-- SLIDE 8: Tukey HSD -->
+      <div class="slide" data-slide="8">
+        <h2>Pairwise Comparison with Tukey HSD</h2>
+        <p>Just like in CRD and RCBD, the F test for treatments tells us at least one variety differs. Tukey HSD identifies <em>which</em> pairs differ, while controlling the family wise error rate.</p>
+
+<pre><code><span class="r-func">TukeyHSD</span>(model, <span class="r-str">"trt"</span>, conf.level <span class="r-op">=</span> <span class="r-num">0.95</span>)
+<span class="r-cm">#&gt; $trt</span>
+<span class="r-cm">#&gt;        diff      lwr      upr   p adj</span>
+<span class="r-cm">#&gt; B-A   0.475  0.0395  0.9105 0.0338</span>
+<span class="r-cm">#&gt; C-A   0.850  0.4145  1.2855 0.0019</span>
+<span class="r-cm">#&gt; D-A  -0.038 -0.4730  0.3980 0.9929</span>
+<span class="r-cm">#&gt; C-B   0.375 -0.0605  0.8105 0.0900</span>
+<span class="r-cm">#&gt; D-B  -0.513 -0.9480 -0.0770 0.0247</span>
+<span class="r-cm">#&gt; D-C  -0.888 -1.3230 -0.4520 0.0015</span></code></pre>
+
+        <h3>Reading the table</h3>
+        <ul>
+          <li><strong>C vs A</strong> and <strong>C vs D</strong>: C wins by a clear margin, both significant.</li>
+          <li><strong>B vs A</strong> and <strong>D vs B</strong>: significant at the 5% family wise level (just).</li>
+          <li><strong>C vs B</strong>: borderline (p = 0.09), not significant at 5% but close.</li>
+          <li><strong>D vs A</strong>: essentially identical (p = 0.99).</li>
+        </ul>
+
+        <h3>Practical recommendation</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Variety</th><th class="num">Mean yield (kg per plot)</th><th>Group</th></tr></thead>
+          <tbody>
+            <tr><td>C</td><td class="num">5.525</td><td>Best</td></tr>
+            <tr><td>B</td><td class="num">5.150</td><td>Second</td></tr>
+            <tr><td>A</td><td class="num">4.675</td><td>Bottom group</td></tr>
+            <tr><td>D</td><td class="num">4.638</td><td>Bottom group</td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>For the plantation manager:</strong> plant variety C in priority blocks. B is a reasonable backup if C seed stock is limited. A and D are statistically indistinguishable; they sit in the bottom group and should be deprioritised.
+        </div>
+
+        <div class="practice" data-q="s8">
+          <h4>🧠 Quick Check</h4>
+          <p class="practice-q">A 3 × 3 Latin Square has df_error = 2. Why is this design rarely used in practice?</p>
+          <div class="practice-options">
+            <button class="practice-btn" data-correct="false">It cannot be randomised properly</button>
+            <button class="practice-btn" data-correct="true">With only 2 error degrees of freedom, F tests have very low power and standard errors are huge</button>
+            <button class="practice-btn" data-correct="false">It requires too many observations</button>
+            <button class="practice-btn" data-correct="false">The treatment effect cannot be estimated</button>
+          </div>
+          <div class="practice-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: Recap -->
+      <div class="slide" data-slide="9">
+        <h2>Recap</h2>
+        <p class="slide-subtitle">RCBD plus a column factor, the same workflow with one more F test.</p>
+
+        <h3>The recipe card</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Step</th><th>R recipe</th></tr></thead>
+          <tbody>
+            <tr><td>Build the data frame</td><td><code>data.frame(row = factor(...), column = factor(...), trt = factor(...), y = ...)</code></td></tr>
+            <tr><td>Marginal totals</td><td><code>tapply(y, row, sum)</code>, <code>tapply(y, column, sum)</code>, <code>tapply(y, trt, sum)</code></td></tr>
+            <tr><td>Fit the ANOVA</td><td><code>aov(y ~ trt + row + column, data = df)</code></td></tr>
+            <tr><td>Three F tests in one table</td><td><code>summary(model)</code></td></tr>
+            <tr><td>Effect estimates</td><td><code>tapply(y, factor, mean) − mean(y)</code> for each factor</td></tr>
+            <tr><td>Model adequacy</td><td>QQ plot, residuals vs fitted, residuals vs run order</td></tr>
+            <tr><td>Pairwise comparison</td><td><code>TukeyHSD(model, "trt")</code></td></tr>
+            <tr><td>df_error formula</td><td><code>(p − 1)(p − 2)</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>When to use which design</h3>
+        <table class="data-table compact">
+          <thead><tr><th>Situation</th><th>Design</th></tr></thead>
+          <tbody>
+            <tr><td>Units are homogeneous</td><td>CRD (Module 5)</td></tr>
+            <tr><td>One known nuisance factor (soil fertility, fabric batch, time slot)</td><td>RCBD (Module 6)</td></tr>
+            <tr><td>Two known nuisance factors that you can lay out as rows and columns</td><td>Latin Square (Module 7)</td></tr>
+            <tr><td>Three or more nuisance factors</td><td>Graeco Latin Square or factorial designs (beyond this lab)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="example-box">
+          <strong>Block 2 done.</strong> CRD, RCBD, and Latin Square cover the three classical fixed effects designs you will need across most of your research career. The next pieces are Exercise Class A (Demography Block) and Exercise Class B (Design of Experiment Block), where you mix and match these techniques on fresh datasets.
+        </div>
+
+        <p style="text-align: center; margin-top: 24px; color: var(--muted);">Explore the other tabs to keep learning. Your progress is saved. 💾</p>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+      <span class="key-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> keys</span>
+      <button class="btn btn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<section id="exercises" class="tab-content">
+  <div class="exercises-header">
+    <h2>Exercises, Rangpur maize hybrid trial 2024 (illustrative)</h2>
+    <p>A 5 × 5 Latin Square with maize hybrids (A through E) as treatments, slope position as rows and irrigation gradient as columns. Dataset is at the top of Exercise 1; reuse through the set.</p>
+  </div>
+  <div id="exercisesContainer"></div>
+</section>
+
+</main>
+</div>
+
+<button class="reset-btn" id="resetBtn" title="Reset all progress for Module 7">↺ Reset Progress</button>
+
+<script>
+const STORAGE_KEY = 'statcomp1-module7-progress-v1';
+const state = {
+  currentSlide: 1, totalSlides: 9, maxSlideReached: 1,
+  quizAnswers: {}, quizScore: null, quizSubmitted: false,
+  flashcardsFlipped: new Set(), exercisesOpened: new Set(),
+  exerciseAnswers: {}, practiceAnswers: {}
+};
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, flashcardsFlipped: [...state.flashcardsFlipped], exercisesOpened: [...state.exercisesOpened] })); } catch (e) {} }
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.assign(state, data);
+    state.flashcardsFlipped = new Set(data.flashcardsFlipped || []);
+    state.exercisesOpened = new Set(data.exercisesOpened || []);
+    state.practiceAnswers = data.practiceAnswers || {};
+  } catch (e) {}
+}
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabSections = document.querySelectorAll('.tab-content');
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    tabSections.forEach(s => s.classList.toggle('active', s.id === tab));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progFill = document.getElementById('progFill');
+const slideCounter = document.getElementById('slideCounter');
+function showSlide(n) {
+  if (n < 1 || n > state.totalSlides) return;
+  state.currentSlide = n;
+  if (n > state.maxSlideReached) state.maxSlideReached = n;
+  slides.forEach(s => s.classList.toggle('active', +s.dataset.slide === n));
+  const pct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  progFill.style.width = pct + '%';
+  slideCounter.textContent = `Slide ${n} of ${state.totalSlides}`;
+  prevBtn.disabled = n === 1;
+  nextBtn.textContent = n === state.totalSlides ? 'Finish ✓' : 'Next →';
+  updateStats();
+  saveState();
+}
+prevBtn.addEventListener('click', () => showSlide(state.currentSlide - 1));
+nextBtn.addEventListener('click', () => { if (state.currentSlide < state.totalSlides) showSlide(state.currentSlide + 1); });
+document.addEventListener('keydown', (e) => {
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab || activeTab.id !== 'slides') return;
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextBtn.click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevBtn.click(); }
+});
+document.querySelectorAll('.practice').forEach(p => {
+  const qid = p.dataset.q;
+  const feedback = p.querySelector('.practice-feedback');
+  if (!feedback) return;
+  const btns = p.querySelectorAll('.practice-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (p.dataset.answered === 'true') return;
+      const correct = btn.dataset.correct === 'true';
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      feedback.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+      feedback.textContent = correct ? '✓ Correct!' : '✗ Not quite, the correct answer is highlighted in green.';
+      p.dataset.answered = 'true';
+      state.practiceAnswers[qid] = correct;
+      saveState();
+    });
+  });
+});
+
+const exercises = [
+  { title: "1. Build the Rangpur maize 5 × 5 Latin Square", diff: "easy",
+    prompt: "BARI's Rangpur station tested 5 maize hybrids (A, B, C, D, E) on a 5 × 5 field grid. Rows capture a north to south fertility gradient; columns capture an irrigation gradient. Type the layout into R as a data frame <code>maize</code> with row, column, trt as factors, and check that each treatment appears once per row and once per column.<br><br><code style='display:block;white-space:pre;background:#f1f5f9;padding:10px;border-radius:6px;font-size:12px;'>Layout (treatment letter and yield, Mg/ha):\n         Col1     Col2     Col3     Col4     Col5\nRow1   A=4.20  B=4.85  C=5.40  D=5.55  E=5.55\nRow2   B=4.95  C=5.20  D=5.80  E=5.75  A=4.85\nRow3   C=5.25  D=5.65  E=5.95  A=5.30  B=5.30\nRow4   D=5.75  E=5.85  A=5.20  B=5.80  C=5.85\nRow5   E=5.95  A=5.40  B=5.75  C=6.25  D=6.20</code>",
+    hint: "Use rep(1:5, each = 5) for row, rep(1:5, times = 5) for column, and a c(...) vector for trt. Use table(maize$trt, maize$row) and table(maize$trt, maize$column) to confirm each treatment appears once per row and once per column.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>row    <- factor(rep(1:5, each = 5))\ncolumn <- factor(rep(1:5, times = 5))\ntrt    <- factor(c(\"A\",\"B\",\"C\",\"D\",\"E\",\n                   \"B\",\"C\",\"D\",\"E\",\"A\",\n                   \"C\",\"D\",\"E\",\"A\",\"B\",\n                   \"D\",\"E\",\"A\",\"B\",\"C\",\n                   \"E\",\"A\",\"B\",\"C\",\"D\"))\nyield <- c(4.20, 4.85, 5.40, 5.55, 5.55,\n           4.95, 5.20, 5.80, 5.75, 4.85,\n           5.25, 5.65, 5.95, 5.30, 5.30,\n           5.75, 5.85, 5.20, 5.80, 5.85,\n           5.95, 5.40, 5.75, 6.25, 6.20)\nmaize <- data.frame(row, column, trt, yield)\n\ntable(maize$trt, maize$row)     # should be all 1s\ntable(maize$trt, maize$column)  # should be all 1s</pre>" },
+  { title: "2. Manual ANOVA, the full table", diff: "med",
+    prompt: "Compute the full ANOVA table by hand: CF, SST, SS_row, SS_col, SS_treat, SSE, the four df values, mean squares, and the three F statistics. Round to three decimals.",
+    hint: "p = 5, N = 25. df_error = (p − 1)(p − 2) = 12. Use tapply for the three sets of totals.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>p <- 5; N <- p^2\nCF       <- sum(maize$yield)^2 / N\nSST      <- sum(maize$yield^2) - CF\nR_tot    <- tapply(maize$yield, maize$row,    sum)\nC_tot    <- tapply(maize$yield, maize$column, sum)\nT_tot    <- tapply(maize$yield, maize$trt,    sum)\nSS_row   <- sum(R_tot^2) / p - CF\nSS_col   <- sum(C_tot^2) / p - CF\nSS_treat <- sum(T_tot^2) / p - CF\nSSE      <- SST - SS_row - SS_col - SS_treat\n\ndf_each  <- p - 1; df_error <- (p - 1) * (p - 2)\nMS_treat <- SS_treat / df_each\nMS_row   <- SS_row   / df_each\nMS_col   <- SS_col   / df_each\nMSE      <- SSE      / df_error\nF_treat  <- MS_treat / MSE\nF_row    <- MS_row   / MSE\nF_col    <- MS_col   / MSE\n\nc(SS_treat=SS_treat, SS_row=SS_row, SS_col=SS_col,\n        SSE=SSE, F_treat=F_treat, F_row=F_row, F_col=F_col)</pre>" },
+  { title: "3. The same model via aov()", diff: "easy",
+    prompt: "Fit the Latin Square with <code>aov()</code> and print the ANOVA summary. Report which of the three effects are significant at &alpha; = 0.05.",
+    hint: "model <- aov(yield ~ trt + row + column, data = maize); summary(model).",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>model <- aov(yield ~ trt + row + column, data = maize)\nsummary(model)\n\n# Compare each p value to 0.05. With our data, all three\n# effects (treatment, row, column) are highly significant.\n# Treatment effect on yield is real; both blocking factors\n# captured meaningful variation.</pre>" },
+  { title: "4. Estimate treatment, row, and column effects", diff: "med",
+    prompt: "Compute the estimated treatment effects τ̂_k, row effects α̂_i, and column effects β̂_j as deviations from the grand mean. Identify the best maize hybrid.",
+    hint: "tapply(yield, factor, mean) − mean(yield) for each factor.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>grand <- mean(maize$yield)\ntau_hat   <- tapply(maize$yield, maize$trt,    mean) - grand\nalpha_hat <- tapply(maize$yield, maize$row,    mean) - grand\nbeta_hat  <- tapply(maize$yield, maize$column, mean) - grand\n\ntau_hat\n# A around -0.5, B around -0.2, C around +0.1,\n# D around +0.3, E around +0.3\n\n# Best hybrid is the one with the highest tau_hat,\n# typically D or E in this data.</pre>" },
+  { title: "5. Model adequacy plots", diff: "med",
+    prompt: "Draw the three diagnostic plots: QQ plot of residuals, residuals vs fitted, and residuals vs run order. Comment briefly on each.",
+    hint: "residuals(model), fitted(model), seq_along(residuals(model)) for run order.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>res <- residuals(model)\nfit <- fitted(model)\n\npar(mfrow = c(1, 3))\nqqnorm(res); qqline(res, col = \"red\")\nplot(fit, res, xlab = \"Fitted\", ylab = \"Residuals\")\nabline(h = 0, lty = 2)\nplot(seq_along(res), res, type = \"b\")\nabline(h = 0, lty = 2)\npar(mfrow = c(1, 1))\n\n# With 25 observations and df_error = 12, the plots are\n# noisy but should show no obvious structure.</pre>" },
+  { title: "6. Tukey HSD on hybrids", diff: "med",
+    prompt: "Run <code>TukeyHSD()</code> on the treatment factor at 95% family wise confidence. Identify pairs of hybrids that are not significantly different, and recommend the best hybrid for the next planting season.",
+    hint: "TukeyHSD(model, \"trt\", conf.level = 0.95). Look at the p adj column.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>TukeyHSD(model, \"trt\", conf.level = 0.95)\n\n# Look for pairs with p adj < 0.05 (significantly different)\n# and pairs with p adj > 0.05 (indistinguishable).\n# Recommend the hybrid with the highest mean that is\n# significantly above the others, typically D or E.</pre>" },
+  { title: "7. Compare LSD against a CRD analysis", diff: "hard",
+    prompt: "What would the treatment F have been if we ignored both row and column factors and analysed the data as a CRD? Refit, compare the two F values, and explain in two sentences whether the Latin Square was worth the design effort.",
+    hint: "Refit with aov(yield ~ trt, data = maize), look at F. Compare to F_treat from the LSD.",
+    approach: "<pre style='background:#1e293b;color:#e2e8f0;padding:10px;border-radius:6px;font-size:12px;overflow-x:auto;'>model_crd <- aov(yield ~ trt, data = maize)\nsummary(model_crd)\n\n# Without the row and column terms, all that systematic\n# variation now hides in the error. MSE inflates, and the\n# treatment F shrinks substantially. If the LSD F was much\n# larger than the CRD F, the Latin Square was worth it.\n# Typical result: LSD F is 3-5x larger than CRD F.</pre>" }
+];
+const exContainer = document.getElementById('exercisesContainer');
+exercises.forEach((ex, i) => {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.dataset.idx = i;
+  div.innerHTML = `<div class="exercise-head"><h4>${ex.title}</h4><span class="diff ${ex.diff}">${ex.diff === 'easy' ? 'Beginner' : ex.diff === 'med' ? 'Intermediate' : 'Advanced'}</span></div><div class="exercise-prompt">${ex.prompt}</div><textarea placeholder="Write your R code here..." data-ex="${i}"></textarea><div class="exercise-actions"><button class="btn btn-ghost btn-sm" data-action="hint" data-ex="${i}">💡 Hint</button><button class="btn btn-ghost btn-sm" data-action="approach" data-ex="${i}">👀 Show Suggested Approach</button><span class="save-indicator" data-ex="${i}"></span></div><div class="exercise-hint" data-ex="${i}"><strong>Hint:</strong> ${ex.hint}</div><div class="exercise-approach" data-ex="${i}"><strong>Suggested approach:</strong> ${ex.approach}</div>`;
+  exContainer.appendChild(div);
+});
+exContainer.querySelectorAll('textarea').forEach(ta => {
+  const idx = +ta.dataset.ex;
+  ta.addEventListener('input', () => {
+    state.exerciseAnswers[idx] = ta.value;
+    state.exercisesOpened.add(idx);
+    const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+    indicator.textContent = '✓ Saved';
+    indicator.classList.add('saved');
+    updateStats();
+    saveState();
+  });
+});
+exContainer.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.ex;
+    const action = btn.dataset.action;
+    const target = exContainer.querySelector(`.exercise-${action}[data-ex="${idx}"]`);
+    target.classList.toggle('show');
+    state.exercisesOpened.add(+idx);
+    updateStats();
+    saveState();
+  });
+});
+function restoreExercises() {
+  Object.entries(state.exerciseAnswers).forEach(([idx, val]) => {
+    const ta = exContainer.querySelector(`textarea[data-ex="${idx}"]`);
+    if (ta) {
+      ta.value = val;
+      const indicator = exContainer.querySelector(`.save-indicator[data-ex="${idx}"]`);
+      if (val && val.trim()) { indicator.textContent = '✓ Saved'; indicator.classList.add('saved'); }
+    }
+  });
+}
+function updateStats() {
+  const slidePct = Math.round((state.maxSlideReached / state.totalSlides) * 100);
+  document.getElementById('progStat').textContent = slidePct + '%';
+  document.getElementById('exStat').textContent = state.exercisesOpened.size;
+}
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all progress for Module 7? Your slide position and exercise answers will be cleared.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+loadState();
+restoreExercises();
+showSlide(state.currentSlide);
+updateStats();
+Object.entries(state.practiceAnswers).forEach(([qid, correct]) => {
+  const p = document.querySelector(`.practice[data-q="${qid}"]`);
+  if (!p) return;
+  const fb = p.querySelector('.practice-feedback');
+  if (!fb) return;
+  p.dataset.answered = 'true';
+  p.querySelectorAll('.practice-btn').forEach(b => { b.classList.add('disabled'); if (b.dataset.correct === 'true') b.classList.add('correct'); });
+  fb.className = 'practice-feedback show ' + (correct ? 'right' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : '✗ The correct answer is highlighted.';
+});
+</script>
+</body>
+</html>
